@@ -19,12 +19,8 @@ function void `tc_name::build_phase(uvm_phase phase);
 endfunction
 
 task `tc_name::run_phase(uvm_phase phase);
-    //utype_default_seq utype_seq = utype_default_seq::type_id::create("utype_seq"); 	
-    //default_preload_cfg_vseq preload_cfg_vseq = default_preload_cfg_vseq::type_id::create("vseq"); 	
-
-    //utype_seq.start(null);
-    //preload_cfg_vseq.vir_cfg_seqr = env.cfg_agt.cfg_seqr;
-    //preload_cfg_vseq.start(null);
+    cfg_default_seq input_seq = cfg_default_seq::type_id::create("input_seq"); 	
+    input_seq.start(env.cfg_agt.cfg_seqr);
 endtask
 
 `undef tc_name

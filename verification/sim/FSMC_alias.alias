@@ -1,0 +1,8 @@
+alias	FSMC
+  IDLE		1		NULL
+  "INPUT A"		2		NULL
+  "INPUT B"		4		NULL
+  EXE		8		NULL
+  DISPLAY		16		NULL
+endalias
+

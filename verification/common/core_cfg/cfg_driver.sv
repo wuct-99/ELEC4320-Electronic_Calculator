@@ -31,7 +31,7 @@ task cfg_driver::run_phase(uvm_phase phase);
 		`uvm_info(get_type_name(), "Wait for item for sequencer", UVM_HIGH)
         @(posedge cfg_intf.clk);	
 		seq_item_port.get_next_item(cfg_trans);
-
+        cfg_intf.drv_cb.board_cal_button <= cfg_trans.board_cal_button;
 		seq_item_port.item_done();
 	end
 endtask

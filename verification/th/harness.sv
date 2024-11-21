@@ -3,6 +3,7 @@
 
 module harness;
     reg clk;
+    reg rst;
 
     always @(*) begin
         #10
@@ -11,13 +12,17 @@ module harness;
     
     initial begin
         clk = 0;
+        #10 rst = 1'b1;
+        #10 rst = 1'b0;
     end
 
     cfg_interface cfg_intf(.clk(clk));
     chk_interface chk_intf(.clk(clk));
 
     cal_top u_cal_top(
-        .clk(clk                 )
+        .clk(clk                 ),
+        .rst(rst                 ),
+        .board_cal_button(cfg_intf.board_cal_button)
     );
 
     initial begin
