@@ -13,6 +13,7 @@ module cal_top(
 input clk;
 input rst;
 
+//PORT
 input [`BUTTON_WIDTH - 1:0] board_cal_button;
 input [14:0] board_cal_switchs;
 output [3:0] cal_board_digit_ctrl;
@@ -20,9 +21,30 @@ output [7:0] cal_board_digit_seg;
 output cal_board_exe_done;
 output [2:0] cal_board_display_stage;
 
-
+//Button
 wire [`BUTTON_WIDTH - 1:0] debounce_button;
 wire [`BUTTON_WIDTH - 1:0] button_qual;
+
+//FSME Define
+reg [`FSME_STATE_WIDTH - 1:0] fsme_curr_state;
+wire [`FSME_STATE_WIDTH - 1:0] fsme_next_state;
+
+wire fsme_idle_to_init;
+wire fsme_init_to_single;
+wire fsme_init_to_multi;
+wire fsme_init_to_done;
+wire fsme_single_to_done;
+wire fsme_multi_to_done;
+wire fsme_done_to_idle;
+
+wire fsme_in_idle;
+wire fsme_in_init;
+wire fsme_in_single;
+wire fsme_in_multi;
+wire fsme_in_done;
+
+wire fsme_state_upd;
+wire fsme_next_idle;
 
 //debouncing 
 debounce #(`BUTTON_WIDTH) button_debounce (.clk(clk), .rst(rst), .data_in(board_cal_button), .data_out(debounce_button));
@@ -68,6 +90,7 @@ wire fsmc_in_display;
 wire fsmc_next_inputa;
 wire fsmc_next_inputb;
 wire fsmc_next_exe   ;
+wire fsmc_next_display;
 
 assign fsmc_state_upd = fsmc_idle_to_inputa   |
                         fsmc_inputa_to_inputb |
@@ -81,11 +104,11 @@ assign fsmc_in_inputb  = fsmc_curr_state[2];
 assign fsmc_in_exe     = fsmc_curr_state[3];
 assign fsmc_in_display = fsmc_curr_state[4];
 
-assign fsmc_idle_to_inputa    = (fsmc_in_idle   );
-assign fsmc_inputa_to_inputb  = (fsmc_in_inputa ) & (button_mid);
-assign fsmc_inputb_to_exe     = (fsmc_in_inputb ) & (button_mid);
-assign fsmc_exe_to_display    = (fsmc_in_exe    ); //FIXME
-assign fsmc_display_to_inputa = (fsmc_in_display) & (button_mid) & (display_stage == 3'b000);
+assign fsmc_idle_to_inputa    = fsmc_in_idle   ;
+assign fsmc_inputa_to_inputb  = fsmc_in_inputa  & button_mid;
+assign fsmc_inputb_to_exe     = fsmc_in_inputb  & button_mid;
+assign fsmc_exe_to_display    = fsmc_in_exe     & fsme_next_idle;
+assign fsmc_display_to_inputa = fsmc_in_display & button_mid & (display_stage == 3'b000);
 
 assign fsmc_next_state = {`FSMC_STATE_WIDTH{fsmc_idle_to_inputa   }} & `FSMC_INPUTA |
                          {`FSMC_STATE_WIDTH{fsmc_inputa_to_inputb }} & `FSMC_INPUTB |
@@ -93,9 +116,10 @@ assign fsmc_next_state = {`FSMC_STATE_WIDTH{fsmc_idle_to_inputa   }} & `FSMC_INP
                          {`FSMC_STATE_WIDTH{fsmc_exe_to_display   }} & `FSMC_DISPLAY|
                          {`FSMC_STATE_WIDTH{fsmc_display_to_inputa}} & `FSMC_INPUTA ;
 
-assign fsmc_next_inputa = fsmc_next_state[1];
-assign fsmc_next_inputb = fsmc_next_state[2];
-assign fsmc_next_exe    = fsmc_next_state[3];
+assign fsmc_next_inputa  = fsmc_next_state[1];
+assign fsmc_next_inputb  = fsmc_next_state[2];
+assign fsmc_next_exe     = fsmc_next_state[3];
+assign fsmc_next_display = fsmc_next_state[4];
 
 dflip_en #(`FSMC_STATE_WIDTH, 5'h1) fsmc_state_ff (.clk(clk), .rst(rst), .en(fsmc_state_upd), .d(fsmc_next_state), .q(fsmc_curr_state));
 
@@ -114,8 +138,6 @@ wire fsmin_sign_to_digit2;
 wire fsmin_in_idle;
 wire fsmin_in_digit0;
 wire fsmin_in_digit1;
-wire fsmin_in_digit1;
-wire fsmin_in_digit2;
 wire fsmin_in_digit2;
 wire fsmin_in_sign;
 
@@ -281,5 +303,150 @@ assign cal_board_digit_seg = {8{digit_val == 8'h0}} & 8'b1111_1100 |
                              {8{digit_val == 8'h7}} & 8'b1110_0000 |
                              {8{digit_val == 8'h8}} & 8'b1111_1110 |
                              {8{digit_val == 8'h9}} & 8'b1110_0110 |
-                             {8{digit_val == 8'ha}} & 8'b0000_0001 | 8'b0; // 8'ha is "."
+                             {8{digit_val == 8'ha}} & 8'b0000_0001 ; // 8'ha is "."
+//Operation decode
+wire switch_en;
+wire [`SWITCH_WIDTH - 1:0] op_qual;
+reg [`SWITCH_WIDTH - 1:0] switchs_in_exe;
+
+assign switch_en = fsmc_next_exe;
+dflip_en #(`SWITCH_WIDTH) switch_ff (.clk(clk), .rst(rst), .en(switch_en), .d(board_cal_switchs), .q(switchs_in_exe));
+
+//In Executioin Stage: D0
+assign op_qual[`OP_ADD ] = switchs_in_exe[0]  ;
+assign op_qual[`OP_SUB ] = switchs_in_exe[1]  & ~switchs_in_exe[0];
+assign op_qual[`OP_MUL ] = switchs_in_exe[2]  & ~(|switchs_in_exe[1:0] );
+assign op_qual[`OP_DIV ] = switchs_in_exe[3]  & ~(|switchs_in_exe[2:0] );
+assign op_qual[`OP_SQRT] = switchs_in_exe[4]  & ~(|switchs_in_exe[3:0] );
+assign op_qual[`OP_COS ] = switchs_in_exe[5]  & ~(|switchs_in_exe[4:0] );
+assign op_qual[`OP_SIN ] = switchs_in_exe[6]  & ~(|switchs_in_exe[5:0] );
+assign op_qual[`OP_TAN ] = switchs_in_exe[7]  & ~(|switchs_in_exe[6:0] );
+assign op_qual[`OP_ACOS] = switchs_in_exe[8]  & ~(|switchs_in_exe[7:0] );
+assign op_qual[`OP_ASIN] = switchs_in_exe[9]  & ~(|switchs_in_exe[8:0] );
+assign op_qual[`OP_ATAN] = switchs_in_exe[10] & ~(|switchs_in_exe[9:0] );
+assign op_qual[`OP_LOG ] = switchs_in_exe[11] & ~(|switchs_in_exe[10:0]);
+assign op_qual[`OP_POW ] = switchs_in_exe[12] & ~(|switchs_in_exe[11:0]);
+assign op_qual[`OP_EXP ] = switchs_in_exe[13] & ~(|switchs_in_exe[12:0]);
+assign op_qual[`OP_FACT] = switchs_in_exe[14] & ~(|switchs_in_exe[13:0]);
+
+wire single_cyc_op;
+//wire multi_cyc_op;
+
+assign single_cyc_op = op_qual[`OP_ADD] |
+                       op_qual[`OP_SUB] |
+                       op_qual[`OP_MUL] |
+                       op_qual[`OP_DIV] ;
+
+//Covert decimal input to binary
+wire [`RESULT_WIDTH-1:0] unsign_inputa; 
+wire [`RESULT_WIDTH-1:0] unsign_inputb;
+wire signed [`RESULT_WIDTH-1:0] sign_inputa; 
+wire signed [`RESULT_WIDTH-1:0] sign_inputb;
+wire signed [`RESULT_WIDTH-1:0] inputa; 
+wire signed [`RESULT_WIDTH-1:0] inputb;
+
+wire [`RESULT_WIDTH-1:0] a_digit0_sl0;
+wire [`RESULT_WIDTH-1:0] a_digit1_sl3;
+wire [`RESULT_WIDTH-1:0] a_digit1_sl1;
+wire [`RESULT_WIDTH-1:0] a_digit2_sl6;
+wire [`RESULT_WIDTH-1:0] a_digit2_sl5;
+wire [`RESULT_WIDTH-1:0] a_digit2_sl2;
+wire [`RESULT_WIDTH-1:0] b_digit0_sl0;
+wire [`RESULT_WIDTH-1:0] b_digit1_sl3;
+wire [`RESULT_WIDTH-1:0] b_digit1_sl1;
+wire [`RESULT_WIDTH-1:0] b_digit2_sl6;
+wire [`RESULT_WIDTH-1:0] b_digit2_sl5;
+wire [`RESULT_WIDTH-1:0] b_digit2_sl2;
+
+assign a_digit0_sl0 = {12'b0, a_digit0} ;
+assign a_digit1_sl3 = {12'b0, a_digit1} << 3'h3;
+assign a_digit1_sl1 = {12'b0, a_digit1} << 3'h1;
+assign a_digit2_sl6 = {12'b0, a_digit2} << 3'h6;
+assign a_digit2_sl5 = {12'b0, a_digit2} << 3'h5;
+assign a_digit2_sl2 = {12'b0, a_digit2} << 3'h2;
+
+assign unsign_inputa = a_digit0_sl0 +
+                       a_digit1_sl3 + a_digit1_sl1 +
+                       a_digit2_sl6 + a_digit2_sl5 + a_digit2_sl2;
+
+assign b_digit0_sl0 = {12'b0, b_digit0} ;
+assign b_digit1_sl3 = {12'b0, b_digit1} << 3'h3;
+assign b_digit1_sl1 = {12'b0, b_digit1} << 3'h1;
+assign b_digit2_sl6 = {12'b0, b_digit2} << 3'h6;
+assign b_digit2_sl5 = {12'b0, b_digit2} << 3'h5;
+assign b_digit2_sl2 = {12'b0, b_digit2} << 3'h2;
+
+assign unsign_inputb = b_digit0_sl0 +
+                       b_digit1_sl3 + b_digit1_sl1 +
+                       b_digit2_sl6 + b_digit2_sl5 + b_digit2_sl2;
+
+assign sign_inputa = ~unsign_inputa + 1;
+assign sign_inputb = ~unsign_inputb + 1;
+assign inputa = a_sign ? sign_inputa : unsign_inputa; 
+assign inputb = b_sign ? sign_inputb : unsign_inputb;
+
+//Check input constraint
+wire invld_input;
+wire invld_div;
+wire invld_sqrt;
+
+assign invld_div  = op_qual[`OP_DIV ] & ~(|inputb); 
+assign invld_sqrt = op_qual[`OP_SQRT] & a_sign;     
+assign invld_input = invld_div  |
+                     invld_sqrt ;
+
+//FSME
+assign fsme_in_idle   = fsme_curr_state[0];
+assign fsme_in_init   = fsme_curr_state[1];
+assign fsme_in_single = fsme_curr_state[2];
+assign fsme_in_multi  = fsme_curr_state[3];
+assign fsme_in_done   = fsme_curr_state[4];
+
+assign fsme_idle_to_init   = fsme_in_idle   & fsmc_in_exe;
+assign fsme_init_to_single = fsme_in_init   & single_cyc_op;
+assign fsme_init_to_multi  = fsme_in_init   & 1'b0 ;
+assign fsme_init_to_done   = fsme_in_init   & invld_input;
+assign fsme_single_to_done = fsme_in_single ;
+assign fsme_multi_to_done  = fsme_in_multi  & 1'b1; //FIXME
+assign fsme_done_to_idle   = fsme_in_done   ;
+
+assign fsme_next_state = {`FSME_STATE_WIDTH{fsme_idle_to_init  }} & `FSME_INIT   |
+                         {`FSME_STATE_WIDTH{fsme_init_to_single}} & `FSME_SINGLE |
+                         {`FSME_STATE_WIDTH{fsme_init_to_multi }} & `FSME_MULTI  |
+                         {`FSME_STATE_WIDTH{fsme_init_to_done  }} & `FSME_DONE   |
+                         {`FSME_STATE_WIDTH{fsme_single_to_done}} & `FSME_DONE   |
+                         {`FSME_STATE_WIDTH{fsme_multi_to_done }} & `FSME_DONE   |
+                         {`FSME_STATE_WIDTH{fsme_done_to_idle  }} & `FSME_IDLE   ;
+
+assign fsme_state_upd = fsme_idle_to_init   |
+                        fsme_init_to_single |
+                        fsme_init_to_multi  |
+                        fsme_init_to_done   |
+                        fsme_single_to_done |
+                        fsme_multi_to_done  |
+                        fsme_done_to_idle   ;
+
+assign fsme_next_idle = fsme_next_state[0];
+
+dflip_en #(`FSME_STATE_WIDTH, 5'h1) fsme_state_ff (.clk(clk), 
+                                                     .rst(rst), 
+                                                     .en(fsme_state_upd), 
+                                                     .d(fsme_next_state), 
+                                                     .q(fsme_curr_state));
+
+//single cyc execute
+wire signed [`RESULT_WIDTH-1:0] add_result;
+wire signed [`RESULT_WIDTH-1:0] sub_result;
+wire signed [`RESULT_WIDTH-1:0] mul_result;
+wire signed [`RESULT_WIDTH-1:0] div_result;
+
+assign add_result = inputa + inputb;
+assign sub_result = inputa - inputb;
+assign mul_result = inputa * inputb;
+assign div_result = inputa / inputb;
+
+//result
+
+
+
 endmodule

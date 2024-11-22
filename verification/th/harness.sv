@@ -22,7 +22,8 @@ module harness;
     cal_top u_cal_top(
         .clk(clk                 ),
         .rst(rst                 ),
-        .board_cal_button(cfg_intf.board_cal_button)
+        .board_cal_button(cfg_intf.board_cal_button),
+        .board_cal_switchs(cfg_intf.board_cal_switchs)
     );
 
     initial begin
