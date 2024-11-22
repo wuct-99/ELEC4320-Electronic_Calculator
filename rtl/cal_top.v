@@ -194,7 +194,6 @@ assign digit0_d = {`DIGIT_WIDTH{fsmin_state_rst                    }} & (4'b0000
 
 dflip_en #(`DIGIT_WIDTH) digit0_ff (.clk(clk), .rst(rst), .en(digit0_en), .d(digit0_d), .q(digit0_q));
 
-
 assign digit1_en = (fsmin_in_digit1 & (button_up | button_down)) | fsmin_state_rst;
 assign digit1_d = {`DIGIT_WIDTH{fsmin_state_rst                    }} & (4'b0000        ) | 
                   {`DIGIT_WIDTH{button_up   & (digit1_q == 4'b1001)}} & (4'b0000        ) |       
@@ -214,8 +213,7 @@ assign digit2_d = {`DIGIT_WIDTH{fsmin_state_rst                    }} & (4'b0000
 dflip_en #(`DIGIT_WIDTH) digit2_ff (.clk(clk), .rst(rst), .en(digit2_en), .d(digit2_d), .q(digit2_q));
 
 assign sign_en = (fsmin_in_sign & (button_up | button_down)) | fsmin_state_rst;;
-assign sign_d = {`DIGIT_WIDTH{fsmin_state_rst          }} & (4'b0000      ) | 
-                {`DIGIT_WIDTH{(button_up | button_down)}} & (sign_q + 1'b1) ;
+assign sign_d = fsmin_state_rst ? 4'b0000 : sign_q + 1'b1;
 
 dflip_en sign_ff (.clk(clk), .rst(rst), .en(sign_en), .d(sign_d), .q(sign_q));
 
@@ -244,6 +242,44 @@ dflip_en #(`DIGIT_WIDTH) b_digit2_ff (.clk(clk), .rst(rst), .en(b_digit_en), .d(
 dflip_en a_sign_ff (.clk(clk), .rst(rst), .en(a_digit_en), .d(sign_q), .q(a_sign));
 dflip_en b_sign_ff (.clk(clk), .rst(rst), .en(b_digit_en), .d(sign_q), .q(b_sign));
 
-//
+//7-segment 
+wire [1:0] digit_cnt_d;
+reg [1:0] digit_cnt_q;
 
+wire digit_cnt_en;
+wire digit_cnt_rst;
+
+wire [7:0] digit_val;
+wire [`DIGIT_WIDTH -1 :0] input_digit_curr;
+
+assign digit_cnt_rst = fsmc_next_inputa | fsmc_next_inputb | fsmc_next_exe; 
+assign digit_cnt_en = fsmc_in_inputa | fsmc_in_inputb | digit_cnt_rst;
+assign digit_cnt_d = digit_cnt_rst ? 2'b00 : digit_cnt_q + 2'b01;
+//digit 0 > digit 1 > digit2 > sign
+dflip_en #(2) digit_cnt_ff (.clk(clk), .rst(rst), .en(digit_cnt_en), .d(digit_cnt_d), .q(digit_cnt_q));
+
+assign cal_board_digit_ctrl = {`DIGIT_WIDTH{digit_cnt_q == 2'b00}} & 4'b1110 |
+                              {`DIGIT_WIDTH{digit_cnt_q == 2'b01}} & 4'b1101 |
+                              {`DIGIT_WIDTH{digit_cnt_q == 2'b10}} & 4'b1011 |
+                              {`DIGIT_WIDTH{digit_cnt_q == 2'b11}} & 4'b0111 | 
+                              {`DIGIT_WIDTH{~digit_cnt_en       }} & 4'b1111 ;
+
+assign input_digit_curr = {`DIGIT_WIDTH{digit_cnt_q == 2'b00}} & digit0_q |
+                          {`DIGIT_WIDTH{digit_cnt_q == 2'b01}} & digit1_q |
+                          {`DIGIT_WIDTH{digit_cnt_q == 2'b10}} & digit2_q |
+                          {`DIGIT_WIDTH{digit_cnt_q == 2'b11}} & sign_q   ;
+
+assign digit_val = {8{fsmc_in_inputa | fsmc_in_inputb}} & input_digit_curr;
+
+assign cal_board_digit_seg = {8{digit_val == 8'h0}} & 8'b1111_1100 |
+                             {8{digit_val == 8'h1}} & 8'b0110_0000 |
+                             {8{digit_val == 8'h2}} & 8'b1101_1010 |
+                             {8{digit_val == 8'h3}} & 8'b1111_0010 |
+                             {8{digit_val == 8'h4}} & 8'b0110_0110 |
+                             {8{digit_val == 8'h5}} & 8'b1011_0110 |
+                             {8{digit_val == 8'h6}} & 8'b1011_1110 |
+                             {8{digit_val == 8'h7}} & 8'b1110_0000 |
+                             {8{digit_val == 8'h8}} & 8'b1111_1110 |
+                             {8{digit_val == 8'h9}} & 8'b1110_0110 |
+                             {8{digit_val == 8'ha}} & 8'b0000_0001 | 8'b0; // 8'ha is "."
 endmodule

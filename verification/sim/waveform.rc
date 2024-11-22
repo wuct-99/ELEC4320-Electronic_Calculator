@@ -2,11 +2,11 @@ Magic 271485
 Revision Verdi_V-2023.12
 
 ; Window Layout <x> <y> <width> <height> <signalwidth> <valuewidth>
-viewPort 0 25 2560 697 285 65
+viewPort 0 25 1880 355 285 65
 
 ; File list:
 ; openDirFile [-d delimiter] [-s time_offset] [-rf auto_bus_rule_file] path_name file_name
-openDirFile -d / -i 0 "" "/dfs/usrhome/ctwu/Desktop/ELEC4320/verification/sim/sim_test/wave/tc_sanity_1.fsdb"
+openDirFile -d / "" "/dfs/usrhome/ctwu/Desktop/ELEC4320/verification/sim/sim_test/wave/tc_sanity_1.fsdb"
 
 ; file time scale:
 ; fileTimeScale ### s|ms|us|ns|ps
@@ -16,14 +16,16 @@ signalSpacing 5
 
 ; windowTimeUnit is used for zoom, cursor & marker
 ; waveform viewport range
-zoom 0.000000 50500.000000
-cursor 3890.000000
+zoom 0.000000 195.312500
+cursor 21.000000
 marker 0.000000
 
+; user define markers
+; userMarker time_pos marker_name color linestyle
 ; visible top row signal index
-top 0
+top 11
 ; marker line index
-markerPos 19
+markerPos 22
 
 ; event list
 ; addEvent event_name event_expression
@@ -83,6 +85,9 @@ addSignal -h 15 -UNSIGNED -HEX -holdScope b_digit0[3:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope b_digit1[3:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope b_digit2[3:0]
 addGroup "G5"
+addSignal -h 15 -UNSIGNED -HEX /harness/u_cal_top/digit_cnt_q[1:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope cal_board_digit_ctrl[3:0]
+addGroup "G6"
 
 ; getSignalForm Scope Hierarchy Status
 ; active file of getSignalForm
