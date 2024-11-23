@@ -33,6 +33,7 @@ task cfg_driver::run_phase(uvm_phase phase);
 		seq_item_port.get_next_item(cfg_trans);
         cfg_intf.drv_cb.board_cal_button  <= cfg_trans.board_cal_button;
         cfg_intf.drv_cb.board_cal_switchs <= cfg_trans.board_cal_switchs;
+        repeat (20) @(posedge cfg_intf.clk);	
 		seq_item_port.item_done();
 	end
 endtask

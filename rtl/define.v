@@ -46,3 +46,5 @@
 `define SWITCH_WIDTH 15
 
 `define RESULT_WIDTH 16
+
+`define DISP_STG_WIDTH 3
