@@ -1,8 +1,25 @@
-alias	FSMC
+alias	FSME
   IDLE		1		NULL
-  "INPUT A"		2		NULL
-  "INPUT B"		4		NULL
-  EXE		8		NULL
-  DISPLAY		16		NULL
+  INIT		2		NULL
+  SINGLE		4		NULL
+  MULTIPLE		8		NULL
+  DONE		16		NULL
+endalias
+
+alias	FSMIN
+  IDLE		1		NULL
+  "DIGIT 0"		2		NULL
+  "DIGIT 1"		4		NULL
+  "DIGIT 2"		8		NULL
+  SIGN		16		NULL
+endalias
+
+alias	FSMC
+  IDLE		1		ID_ORANGE8
+  "INPUT A"		2		ID_GREEN8
+  "INPUT B"		4		ID_YELLOW8
+  EXE		8		ID_BLUE8
+  CONVERT		16		ID_PURPLE8
+  DISPLAY		32		ID_CYAN8
 endalias
 

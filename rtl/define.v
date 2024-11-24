@@ -1,9 +1,10 @@
-`define FSMC_IDLE    5'h1
-`define FSMC_INPUTA  5'h2
-`define FSMC_INPUTB  5'h4
-`define FSMC_EXE     5'h8
-`define FSMC_DISPLAY 5'h10
-`define FSMC_STATE_WIDTH 5
+`define FSMC_IDLE    6'h1
+`define FSMC_INPUTA  6'h2
+`define FSMC_INPUTB  6'h4
+`define FSMC_EXE     6'h8
+`define FSMC_CONVERT 6'h10
+`define FSMC_DISPLAY 6'h20
+`define FSMC_STATE_WIDTH 6
 
 `define FSMIN_IDLE   5'h1
 `define FSMIN_DIGIT0 5'h2
