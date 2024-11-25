@@ -2,7 +2,7 @@ Magic 271485
 Revision Verdi_V-2023.12
 
 ; Window Layout <x> <y> <width> <height> <signalwidth> <valuewidth>
-viewPort 0 25 1920 390 285 65
+viewPort 0 25 1920 360 285 65
 
 ; File list:
 ; openDirFile [-d delimiter] [-s time_offset] [-rf auto_bus_rule_file] path_name file_name
@@ -16,16 +16,16 @@ signalSpacing 5
 
 ; windowTimeUnit is used for zoom, cursor & marker
 ; waveform viewport range
-zoom 0.000000 50500.000000
+zoom 0.000000 101000.000000
 cursor 26754.53367875648
 marker -10140.000000
 
 ; user define markers
 ; userMarker time_pos marker_name color linestyle
 ; visible top row signal index
-top 53
+top 25
 ; marker line index
-markerPos 69
+markerPos 67
 
 ; event list
 ; addEvent event_name event_expression
@@ -95,7 +95,7 @@ aliasname FSME
 addSignal -h 15 -UNSIGNED -HEX /harness/u_cal_top/fsme_curr_state[4:0]
 aliasname FSME
 addSignal -h 15 -UNSIGNED -HEX -holdScope fsme_next_state[4:0]
-addGroup "digit" -e FALSE
+addGroup "digit"
 addSignal -expanded -h 15 -UNSIGNED -HEX /harness/u_cal_top/digit0_q[3:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope digit1_q[3:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope digit2_q[3:0]
@@ -116,11 +116,11 @@ addSignal -h 15 -2COMP -UDEC -holdScope sign_inputa[15:0]
 addSignal -h 15 -holdScope b_sign
 addSignal -h 15 -UNSIGNED -UDEC -holdScope unsign_inputb[15:0]
 addSignal -h 15 -2COMP -UDEC -holdScope sign_inputb[15:0]
-addGroup "7segment" -e FALSE
+addGroup "7segment"
 addSignal -h 15 -UNSIGNED -HEX /harness/u_cal_top/digit_cnt_q[1:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope cal_board_digit_ctrl[3:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope cal_board_digit_seg[7:0]
-addGroup "exe"
+addGroup "exe" -e FALSE
 addSignal -h 15 -2COMP -UDEC /harness/u_cal_top/inputa[15:0]
 addSignal -h 15 -2COMP -HEX -holdScope inputb[15:0]
 addSignal -h 15 -2COMP -UDEC -holdScope add_result[15:0]
@@ -136,12 +136,12 @@ addSignal -h 15 /harness/u_cal_top/display_stage_en
 addSignal -h 15 -UNSIGNED -HEX -holdScope display_stage[2:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope display_stage_q[2:0]
 addSignal -h 15 -holdScope display_last_stage
-addGroup "G13" -e FALSE
+addGroup "convert cnt" -e FALSE
 addSignal -h 15 -UNSIGNED -HEX /harness/u_cal_top/cvt_cnt[3:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope cvt_cnt_q[3:0]
 addSignal -h 15 -holdScope cvt_done
 addSignal -h 15 -holdScope fsmc_convert_to_display
-addGroup "G14"
+addGroup "decimal output" -e FALSE
 addSignal -h 15 -UNSIGNED -HEX /harness/u_cal_top/dec_digit_4[3:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_3[3:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_2[3:0]

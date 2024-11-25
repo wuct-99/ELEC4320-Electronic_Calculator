@@ -286,8 +286,8 @@ reg [1:0] digit_cnt_q;
 wire digit_cnt_en;
 wire digit_cnt_rst;
 
-wire [7:0] digit_val;
-wire [`DIGIT_WIDTH -1 :0] input_digit_curr;
+wire [`DIGIT_WIDTH- 1:0] digit_val;
+wire [`DIGIT_WIDTH -1:0] input_digit_curr;
 
 assign digit_cnt_rst = fsmc_next_inputa | fsmc_next_inputb | fsmc_next_exe | fsmc_next_display; 
 assign digit_cnt_en = fsmc_in_inputa | fsmc_in_inputb | fsmc_in_display & ~invld_result | digit_cnt_rst;
@@ -304,22 +304,23 @@ assign cal_board_digit_ctrl = {`DIGIT_WIDTH{digit_cnt_q == 2'b00}} & `DIGIT_WIDT
 assign input_digit_curr = {`DIGIT_WIDTH{digit_cnt_q == 2'b00}} & digit0_q |
                           {`DIGIT_WIDTH{digit_cnt_q == 2'b01}} & digit1_q |
                           {`DIGIT_WIDTH{digit_cnt_q == 2'b10}} & digit2_q |
-                          {`DIGIT_WIDTH{digit_cnt_q == 2'b11}} & sign_q   ;
+                          {`DIGIT_WIDTH{digit_cnt_q == 2'b11}} & {3'b101, sign_q} ;
 //FIXME print output
+assign digit_val = (fsmc_in_inputa | fsmc_in_inputb) ? input_digit_curr : 4'ha;
 
-assign digit_val = {8{fsmc_in_inputa | fsmc_in_inputb}} & input_digit_curr;
-
-assign cal_board_digit_seg = {8{digit_val == 8'h0}} & 8'b1111_1100 |
-                             {8{digit_val == 8'h1}} & 8'b0110_0000 |
-                             {8{digit_val == 8'h2}} & 8'b1101_1010 |
-                             {8{digit_val == 8'h3}} & 8'b1111_0010 |
-                             {8{digit_val == 8'h4}} & 8'b0110_0110 |
-                             {8{digit_val == 8'h5}} & 8'b1011_0110 |
-                             {8{digit_val == 8'h6}} & 8'b1011_1110 |
-                             {8{digit_val == 8'h7}} & 8'b1110_0000 |
-                             {8{digit_val == 8'h8}} & 8'b1111_1110 |
-                             {8{digit_val == 8'h9}} & 8'b1110_0110 |
-                             {8{digit_val == 8'ha}} & 8'b0000_0001 ; // 8'ha is "."
+assign cal_board_digit_seg = {8{digit_val == `DIGIT_WIDTH'h0}} & 8'b1111_1100 |
+                             {8{digit_val == `DIGIT_WIDTH'h1}} & 8'b0110_0000 |
+                             {8{digit_val == `DIGIT_WIDTH'h2}} & 8'b1101_1010 |
+                             {8{digit_val == `DIGIT_WIDTH'h3}} & 8'b1111_0010 |
+                             {8{digit_val == `DIGIT_WIDTH'h4}} & 8'b0110_0110 |
+                             {8{digit_val == `DIGIT_WIDTH'h5}} & 8'b1011_0110 |
+                             {8{digit_val == `DIGIT_WIDTH'h6}} & 8'b1011_1110 |
+                             {8{digit_val == `DIGIT_WIDTH'h7}} & 8'b1110_0000 |
+                             {8{digit_val == `DIGIT_WIDTH'h8}} & 8'b1111_1110 |
+                             {8{digit_val == `DIGIT_WIDTH'h9}} & 8'b1110_0110 |
+                             {8{digit_val == `DIGIT_WIDTH'ha}} & 8'b0000_0000 | // None
+                             {8{digit_val == `DIGIT_WIDTH'hb}} & 8'b0000_0010 | // "-"; 
+                             {8{digit_val == `DIGIT_WIDTH'hc}} & 8'b0000_0001 ; // "."
 //Operation decode
 wire switch_en;
 wire [`SWITCH_WIDTH - 1:0] op_qual;

@@ -39,7 +39,7 @@ function void tc_base::phase_ready_to_end(uvm_phase phase);
             phase.raise_objection(this, "Test Not Yet Ready to End");
             fork begin
                 `uvm_info(get_type_name(), "Phase Ready Testing", UVM_LOW);
-                #50000;
+                #100000;
                 check_state = 1;
                 phase.drop_objection(this, "Test Ready to End");
             end
