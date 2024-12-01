@@ -369,7 +369,7 @@ dflip_en #(`DIGIT_WIDTH) digit2_ff (.clk(clk), .rst(rst), .en(digit2_en), .d(dig
 
 assign sign_en = (fsmin_in_sign & (button_up | button_down)) | fsmin_state_rst;
 assign sign_d = fsmin_state_rst ? 4'b0000 : sign_q + 1'b1;
-dflip_en sign_ff (.clk(clk_display), .rst(rst), .en(sign_en), .d(sign_d), .q(sign_q));
+dflip_en sign_ff (.clk(clk), .rst(rst), .en(sign_en), .d(sign_d), .q(sign_q));
 
 //Save input a/b
 assign a_digit_en = fsmc_next_inputb;
