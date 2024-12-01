@@ -151,7 +151,7 @@ wire [`SWITCH_WIDTH - 1:0] switchs_in_exe;
 wire [`SWITCH_WIDTH - 1:0] op_qual;
 wire int_result_op;
 wire single_cyc_op;
-//wire multi_cyc_op;
+wire multi_cyc_op;
 //exe
 wire signed [`RESULT_WIDTH-1:0] add_result;
 wire signed [`RESULT_WIDTH-1:0] sub_result;
@@ -339,14 +339,12 @@ dflip_en #(`FSMIN_STATE_WIDTH, 5'h1) fsmin_state_ff (.clk(clk),
                                                      .d(fsmin_next_state), 
                                                      .q(fsmin_curr_state));
 //input digit Control
-
 assign digit0_en = (fsmin_in_digit0 & (button_up | button_down)) | fsmin_state_rst;
 assign digit0_d = {`DIGIT_WIDTH{fsmin_state_rst                               }} & (`DIGIT_WIDTH'b0000) | 
                   {`DIGIT_WIDTH{button_up   & (digit0_q == `DIGIT_WIDTH'b1001)}} & (`DIGIT_WIDTH'b0000) |       
                   {`DIGIT_WIDTH{button_up   & (digit0_q <  `DIGIT_WIDTH'b1001)}} & (digit0_q + 4'b1   ) | 
                   {`DIGIT_WIDTH{button_down & (digit0_q == `DIGIT_WIDTH'b0000)}} & (`DIGIT_WIDTH'b1001) | 
                   {`DIGIT_WIDTH{button_down & (digit0_q >  `DIGIT_WIDTH'b0000)}} & (digit0_q - 4'b1   ) ;
-
 dflip_en #(`DIGIT_WIDTH) digit0_ff (.clk(clk), .rst(rst), .en(digit0_en), .d(digit0_d), .q(digit0_q));
 
 assign digit1_en = (fsmin_in_digit1 & (button_up | button_down)) | fsmin_state_rst;
@@ -355,7 +353,6 @@ assign digit1_d = {`DIGIT_WIDTH{fsmin_state_rst                               }}
                   {`DIGIT_WIDTH{button_up   & (digit1_q <  `DIGIT_WIDTH'b1001)}} & (digit1_q + 4'b1   ) | 
                   {`DIGIT_WIDTH{button_down & (digit1_q == `DIGIT_WIDTH'b0000)}} & (`DIGIT_WIDTH'b1001) | 
                   {`DIGIT_WIDTH{button_down & (digit1_q >  `DIGIT_WIDTH'b0000)}} & (digit1_q - 4'b1   ) ;
-
 dflip_en #(`DIGIT_WIDTH) digit1_ff (.clk(clk), .rst(rst), .en(digit1_en), .d(digit1_d), .q(digit1_q));
 
 assign digit2_en = (fsmin_in_digit2 & (button_up | button_down)) | fsmin_state_rst;
@@ -364,17 +361,13 @@ assign digit2_d = {`DIGIT_WIDTH{fsmin_state_rst                               }}
                   {`DIGIT_WIDTH{button_up   & (digit2_q <  `DIGIT_WIDTH'b1001)}} & (digit2_q + 4'b1   ) | 
                   {`DIGIT_WIDTH{button_down & (digit2_q == `DIGIT_WIDTH'b0000)}} & (`DIGIT_WIDTH'b1001) | 
                   {`DIGIT_WIDTH{button_down & (digit2_q >  `DIGIT_WIDTH'b0000)}} & (digit2_q - 4'b1   ) ;
-
 dflip_en #(`DIGIT_WIDTH) digit2_ff (.clk(clk), .rst(rst), .en(digit2_en), .d(digit2_d), .q(digit2_q));
 
 assign sign_en = (fsmin_in_sign & (button_up | button_down)) | fsmin_state_rst;
 assign sign_d = fsmin_state_rst ? 4'b0000 : sign_q + 1'b1;
-
 dflip_en sign_ff (.clk(clk_display), .rst(rst), .en(sign_en), .d(sign_d), .q(sign_q));
 
 //Save input a/b
-
-
 assign a_digit_en = fsmc_next_inputb;
 assign b_digit_en = fsmc_next_exe;
 
@@ -389,8 +382,6 @@ dflip_en b_sign_ff (.clk(clk), .rst(rst), .en(b_digit_en), .d(sign_q), .q(b_sign
 
 
 //7-segment 
-
-
 assign digit_cnt_rst = fsmc_next_inputa | fsmc_next_inputb | fsmc_next_exe | fsmc_next_display; 
 assign digit_cnt_en = fsmc_in_inputa | fsmc_in_inputb | fsmc_in_display & ~invld_result | digit_cnt_rst;
 assign digit_cnt_d = digit_cnt_rst ? 2'b00 : digit_cnt_q + 2'b01;
@@ -444,44 +435,38 @@ assign switch_en = fsmc_next_exe;
 dflip_en #(`SWITCH_WIDTH) switch_ff (.clk(clk), .rst(rst), .en(switch_en), .d(board_cal_switchs), .q(switchs_in_exe));
 
 //In Executioin Stage: D0
-assign op_qual[`OP_ADD ] = switchs_in_exe[0]  ;
-assign op_qual[`OP_SUB ] = switchs_in_exe[1]  & ~switchs_in_exe[0];
-assign op_qual[`OP_MUL ] = switchs_in_exe[2]  & ~(|switchs_in_exe[1:0] );
-assign op_qual[`OP_DIV ] = switchs_in_exe[3]  & ~(|switchs_in_exe[2:0] );
-assign op_qual[`OP_SQRT] = switchs_in_exe[4]  & ~(|switchs_in_exe[3:0] );
-assign op_qual[`OP_COS ] = switchs_in_exe[5]  & ~(|switchs_in_exe[4:0] );
-assign op_qual[`OP_SIN ] = switchs_in_exe[6]  & ~(|switchs_in_exe[5:0] );
-assign op_qual[`OP_TAN ] = switchs_in_exe[7]  & ~(|switchs_in_exe[6:0] );
-assign op_qual[`OP_ACOS] = switchs_in_exe[8]  & ~(|switchs_in_exe[7:0] );
-assign op_qual[`OP_ASIN] = switchs_in_exe[9]  & ~(|switchs_in_exe[8:0] );
-assign op_qual[`OP_ATAN] = switchs_in_exe[10] & ~(|switchs_in_exe[9:0] );
-assign op_qual[`OP_LOG ] = switchs_in_exe[11] & ~(|switchs_in_exe[10:0]);
-assign op_qual[`OP_POW ] = switchs_in_exe[12] & ~(|switchs_in_exe[11:0]);
-assign op_qual[`OP_EXP ] = switchs_in_exe[13] & ~(|switchs_in_exe[12:0]);
-assign op_qual[`OP_FACT] = switchs_in_exe[14] & ~(|switchs_in_exe[13:0]);
+assign op_qual[`OP_ADD ] = switchs_in_exe[`OP_ADD ] ;
+assign op_qual[`OP_SUB ] = switchs_in_exe[`OP_SUB ] & ~switchs_in_exe[0];
+assign op_qual[`OP_MUL ] = switchs_in_exe[`OP_MUL ] & ~(|switchs_in_exe[1:0] );
+assign op_qual[`OP_DIV ] = switchs_in_exe[`OP_DIV ] & ~(|switchs_in_exe[2:0] );
+assign op_qual[`OP_SQRT] = switchs_in_exe[`OP_SQRT] & ~(|switchs_in_exe[3:0] );
+assign op_qual[`OP_COS ] = switchs_in_exe[`OP_COS ] & ~(|switchs_in_exe[4:0] );
+assign op_qual[`OP_SIN ] = switchs_in_exe[`OP_SIN ] & ~(|switchs_in_exe[5:0] );
+assign op_qual[`OP_TAN ] = switchs_in_exe[`OP_TAN ] & ~(|switchs_in_exe[6:0] );
+assign op_qual[`OP_ACOS] = switchs_in_exe[`OP_ACOS] & ~(|switchs_in_exe[7:0] );
+assign op_qual[`OP_ASIN] = switchs_in_exe[`OP_ASIN] & ~(|switchs_in_exe[8:0] );
+assign op_qual[`OP_ATAN] = switchs_in_exe[`OP_ATAN] & ~(|switchs_in_exe[9:0] );
+assign op_qual[`OP_LOG ] = switchs_in_exe[`OP_LOG ] & ~(|switchs_in_exe[10:0]);
+assign op_qual[`OP_POW ] = switchs_in_exe[`OP_POW ] & ~(|switchs_in_exe[11:0]);
+assign op_qual[`OP_EXP ] = switchs_in_exe[`OP_EXP ] & ~(|switchs_in_exe[12:0]);
+assign op_qual[`OP_FACT] = switchs_in_exe[`OP_FACT] & ~(|switchs_in_exe[13:0]);
 
 assign int_result_op = op_qual[`OP_ADD] | op_qual[`OP_SUB] | op_qual[`OP_MUL];
-
-
 
 assign single_cyc_op = op_qual[`OP_ADD] |
                        op_qual[`OP_SUB] |
                        op_qual[`OP_MUL] |
                        op_qual[`OP_DIV] ;
 
+assign multi_cyc_op = 1'b0;
+
 //Covert decimal input to binary
-
-
 assign a_digit0_sl0 = {12'b0, a_digit0} ;
 assign a_digit1_sl3 = {12'b0, a_digit1} << 3'h3;
 assign a_digit1_sl1 = {12'b0, a_digit1} << 3'h1;
 assign a_digit2_sl6 = {12'b0, a_digit2} << 3'h6;
 assign a_digit2_sl5 = {12'b0, a_digit2} << 3'h5;
 assign a_digit2_sl2 = {12'b0, a_digit2} << 3'h2;
-
-assign unsign_inputa = a_digit0_sl0 +
-                       a_digit1_sl3 + a_digit1_sl1 +
-                       a_digit2_sl6 + a_digit2_sl5 + a_digit2_sl2;
 
 assign b_digit0_sl0 = {12'b0, b_digit0} ;
 assign b_digit1_sl3 = {12'b0, b_digit1} << 3'h3;
@@ -490,9 +475,90 @@ assign b_digit2_sl6 = {12'b0, b_digit2} << 3'h6;
 assign b_digit2_sl5 = {12'b0, b_digit2} << 3'h5;
 assign b_digit2_sl2 = {12'b0, b_digit2} << 3'h2;
 
-assign unsign_inputb = b_digit0_sl0 +
-                       b_digit1_sl3 + b_digit1_sl1 +
-                       b_digit2_sl6 + b_digit2_sl5 + b_digit2_sl2;
+//init counter
+wire init_cnt_rst;
+wire [1:0] init_cnt_d;
+wire [1:0] init_cnt_q;
+wire init_cnt_en;
+
+assign init_cnt_rst = fsmc_next_exe; 
+assign init_cnt_d = init_cnt_rst ? 2'b00 : init_cnt_q + 2'b01;
+assign init_cnt_en = ~(&init_cnt_d);
+dflip_en #(2) init_cnt_ff (.clk(clk), .rst(rst), .en(init_cnt_en), .d(init_cnt_d), .q(init_cnt_q));
+
+wire [`RESULT_WIDTH-1:0] a_lv1_0;
+wire [`RESULT_WIDTH-1:0] a_lv1_1;
+wire [`RESULT_WIDTH-1:0] a_lv1_2;
+wire [`RESULT_WIDTH-1:0] a_lv1_0_q;
+wire [`RESULT_WIDTH-1:0] a_lv1_1_q;
+wire [`RESULT_WIDTH-1:0] a_lv1_2_q;
+wire [`RESULT_WIDTH-1:0] a_lv2;
+wire [`RESULT_WIDTH-1:0] a_lv3;
+wire [`RESULT_WIDTH-1:0] a_lv2_q;
+wire [`RESULT_WIDTH-1:0] a_lv3_q;
+
+wire a_lv1_0_en;
+wire a_lv1_1_en;
+wire a_lv1_2_en;
+wire a_lv2_en;
+wire a_lv3_en;
+
+wire [`RESULT_WIDTH-1:0] b_lv1_0;
+wire [`RESULT_WIDTH-1:0] b_lv1_1;
+wire [`RESULT_WIDTH-1:0] b_lv1_2;
+wire [`RESULT_WIDTH-1:0] b_lv1_0_q;
+wire [`RESULT_WIDTH-1:0] b_lv1_1_q;
+wire [`RESULT_WIDTH-1:0] b_lv1_2_q;
+wire [`RESULT_WIDTH-1:0] b_lv2;
+wire [`RESULT_WIDTH-1:0] b_lv3;
+wire [`RESULT_WIDTH-1:0] b_lv2_q;
+wire [`RESULT_WIDTH-1:0] b_lv3_q;
+
+wire b_lv1_0_en;
+wire b_lv1_1_en;
+wire b_lv1_2_en;
+wire b_lv2_en;
+wire b_lv3_en;
+
+assign a_lv1_0 = a_digit1_sl3 + a_digit1_sl1;
+assign a_lv1_1 = a_digit2_sl6 + a_digit2_sl5;
+assign a_lv1_2 = a_digit0_sl0 + a_digit2_sl2;
+
+assign a_lv1_0_en = init_cnt_q == 2'b0;
+assign a_lv1_1_en = init_cnt_q == 2'b0;
+assign a_lv1_2_en = init_cnt_q == 2'b0;
+assign a_lv2_en   = init_cnt_q == 2'b1;
+assign a_lv3_en   = init_cnt_q == 2'b10;
+
+dflip_en #(`RESULT_WIDTH) a_lv1_0_ff (.clk(clk), .rst(rst), .en(a_lv1_0_en), .d(a_lv1_0), .q(a_lv1_0_q));
+dflip_en #(`RESULT_WIDTH) a_lv1_1_ff (.clk(clk), .rst(rst), .en(a_lv1_1_en), .d(a_lv1_1), .q(a_lv1_1_q));
+dflip_en #(`RESULT_WIDTH) a_lv1_2_ff (.clk(clk), .rst(rst), .en(a_lv1_2_en), .d(a_lv1_2), .q(a_lv1_2_q));
+
+assign a_lv2 = a_lv1_0_q + a_lv1_1_q;
+dflip_en #(`RESULT_WIDTH) a_lv2_ff   (.clk(clk), .rst(rst), .en(a_lv2_en), .d(a_lv2), .q(a_lv2_q));
+assign a_lv3 = a_lv2_q + a_lv1_2_q;
+dflip_en #(`RESULT_WIDTH) a_lv3_ff   (.clk(clk), .rst(rst), .en(a_lv3_en), .d(a_lv3), .q(a_lv3_q));
+assign unsign_inputa = a_lv3_q;
+
+assign b_lv1_0 = b_digit1_sl3 + b_digit1_sl1;
+assign b_lv1_1 = b_digit2_sl6 + b_digit2_sl5;
+assign b_lv1_2 = b_digit0_sl0 + b_digit2_sl2;
+
+assign b_lv1_0_en = init_cnt_q == 2'b0;
+assign b_lv1_1_en = init_cnt_q == 2'b0;
+assign b_lv1_2_en = init_cnt_q == 2'b0;
+assign b_lv2_en   = init_cnt_q == 2'b1;
+assign b_lv3_en   = init_cnt_q == 2'b10;
+
+dflip_en #(`RESULT_WIDTH) b_lv1_0_ff (.clk(clk), .rst(rst), .en(b_lv1_0_en), .d(b_lv1_0), .q(b_lv1_0_q));
+dflip_en #(`RESULT_WIDTH) b_lv1_1_ff (.clk(clk), .rst(rst), .en(b_lv1_1_en), .d(b_lv1_1), .q(b_lv1_1_q));
+dflip_en #(`RESULT_WIDTH) b_lv1_2_ff (.clk(clk), .rst(rst), .en(b_lv1_2_en), .d(b_lv1_2), .q(b_lv1_2_q));
+
+assign b_lv2 = b_lv1_0_q + b_lv1_1_q;
+dflip_en #(`RESULT_WIDTH) b_lv2_ff   (.clk(clk), .rst(rst), .en(b_lv2_en), .d(b_lv2), .q(b_lv2_q));
+assign b_lv3 = b_lv2_q + b_lv1_2_q;
+dflip_en #(`RESULT_WIDTH) b_lv3_ff   (.clk(clk), .rst(rst), .en(b_lv3_en), .d(b_lv3), .q(b_lv3_q));
+assign unsign_inputb = b_lv3_q;
 
 assign sign_inputa = ~unsign_inputa + 1;
 assign sign_inputb = ~unsign_inputb + 1;
@@ -500,7 +566,6 @@ assign inputa = a_sign ? sign_inputa : unsign_inputa;
 assign inputb = b_sign ? sign_inputb : unsign_inputb;
 
 //Check input constraint
-
 assign invld_div  = op_qual[`OP_DIV ] & ~(|inputb); 
 assign invld_sqrt = op_qual[`OP_SQRT] & a_sign;     
 assign invld_op   = ~(|op_qual);     
@@ -516,9 +581,9 @@ assign fsme_in_multi  = fsme_curr_state[3];
 assign fsme_in_done   = fsme_curr_state[4];
 
 assign fsme_idle_to_init   = fsme_in_idle   & fsmc_in_exe;
-assign fsme_init_to_single = fsme_in_init   & single_cyc_op;
-assign fsme_init_to_multi  = fsme_in_init   & 1'b0 ;
-assign fsme_init_to_done   = fsme_in_init   & invld_input;
+assign fsme_init_to_single = fsme_in_init   & single_cyc_op & init_cnt_q[1];
+assign fsme_init_to_multi  = fsme_in_init   & multi_cyc_op  & init_cnt_q[1];
+assign fsme_init_to_done   = fsme_in_init   & invld_input   & init_cnt_q[1];
 assign fsme_single_to_done = fsme_in_single ;
 assign fsme_multi_to_done  = fsme_in_multi  & 1'b1; //FIXME
 assign fsme_done_to_idle   = fsme_in_done   ;
@@ -550,8 +615,6 @@ dflip_en #(`FSME_STATE_WIDTH, `FSME_STATE_WIDTH'h1) fsme_state_ff (.clk(clk),
 assign exe_pre_done = fsme_next_idle;
 
 //single cyc execute
-
-
 assign add_result = inputa + inputb;
 assign sub_result = inputa - inputb;
 assign mul_result = inputa * inputb;

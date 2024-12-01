@@ -2,7 +2,7 @@ Magic 271485
 Revision Verdi_V-2023.12
 
 ; Window Layout <x> <y> <width> <height> <signalwidth> <valuewidth>
-viewPort 0 25 1920 342 285 65
+viewPort 0 25 1920 398 285 65
 
 ; File list:
 ; openDirFile [-d delimiter] [-s time_offset] [-rf auto_bus_rule_file] path_name file_name
@@ -16,16 +16,16 @@ signalSpacing 5
 
 ; windowTimeUnit is used for zoom, cursor & marker
 ; waveform viewport range
-zoom 0.000000 101000.000000
+zoom 34659.842890 35232.618890
 cursor 10150.000000
 marker -10140.000000
 
 ; user define markers
 ; userMarker time_pos marker_name color linestyle
 ; visible top row signal index
-top 4
+top 61
 ; marker line index
-markerPos 7
+markerPos 21
 
 ; event list
 ; addEvent event_name event_expression
@@ -68,7 +68,7 @@ nalias INIT		2		NULL
 nalias DONE		16		NULL
 nalias MULTIPLE		8		NULL
 
-addGroup "INPUT"
+addGroup "INPUT" -e FALSE
 activeDirFile "" "/dfs/usrhome/ctwu/Desktop/ELEC4320/verification/sim/sim_test/wave/tc_sanity_1.fsdb"
 addSignal -h 15 -UNSIGNED -HEX /harness/u_cal_top/board_cal_button[4:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope board_cal_switchs[14:0]
@@ -92,9 +92,10 @@ addSignal -h 15 -holdScope fsmin_idle_to_digit0
 addSignal -h 15 -holdScope fsmc_next_inputb
 aliasname FSMIN
 addSignal -h 15 -UNSIGNED -HEX -holdScope fsmin_next_state[4:0]
-addGroup "FSME" -e FALSE
+addGroup "FSME"
 aliasname FSME
 addSignal -h 15 -UNSIGNED -HEX /harness/u_cal_top/fsme_curr_state[4:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope init_cnt_q[1:0]
 aliasname FSME
 addSignal -h 15 -UNSIGNED -HEX -holdScope fsme_next_state[4:0]
 addGroup "digit" -e FALSE
@@ -148,7 +149,7 @@ addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_3[3:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_2[3:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_1[3:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_0[3:0]
-addGroup "Output Display" -e FALSE
+addGroup "Output Display"
 addSignal -h 15 -UNSIGNED -HEX /harness/u_cal_top/dec_digit_4_for_display[3:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_3_for_display[3:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_2_for_display[3:0]
