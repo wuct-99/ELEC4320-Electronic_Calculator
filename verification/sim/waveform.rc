@@ -2,7 +2,7 @@ Magic 271485
 Revision Verdi_V-2023.12
 
 ; Window Layout <x> <y> <width> <height> <signalwidth> <valuewidth>
-viewPort 0 25 1920 360 285 65
+viewPort 0 25 2560 579 285 65
 
 ; File list:
 ; openDirFile [-d delimiter] [-s time_offset] [-rf auto_bus_rule_file] path_name file_name
@@ -16,16 +16,16 @@ signalSpacing 5
 
 ; windowTimeUnit is used for zoom, cursor & marker
 ; waveform viewport range
-zoom 0.000000 101000.000000
-cursor 26754.53367875648
+zoom 63400.863255 64467.726489
+cursor 63470.000000
 marker -10140.000000
 
 ; user define markers
 ; userMarker time_pos marker_name color linestyle
 ; visible top row signal index
-top 25
+top 41
 ; marker line index
-markerPos 67
+markerPos 54
 
 ; event list
 ; addEvent event_name event_expression
@@ -46,12 +46,13 @@ curSTATUS ByChange
 
 
 aliasmapname FSMC
-nalias DISPLAY		32		NULL
+nalias SETUP		32		NULL
 nalias IDLE		1		NULL
 nalias "INPUT B"		4		NULL
 nalias "INPUT A"		2		NULL
 nalias CONVERT		16		NULL
 nalias EXE		8		NULL
+nalias DISPLAY		64		NULL
 
 aliasmapname FSMIN
 nalias IDLE		1		NULL
@@ -77,12 +78,11 @@ addSignal -h 15 -holdScope button_left
 addSignal -h 15 -holdScope button_right
 addSignal -h 15 -holdScope button_mid
 addGroup "FSMC"
-addSignal -h 15 /harness/u_cal_top/clk
 aliasname FSMC
-addSignal -h 15 -UNSIGNED -HEX -holdScope fsmc_curr_state[5:0]
+addSignal -h 15 -UNSIGNED -HEX /harness/u_cal_top/fsmc_curr_state[6:0]
 aliasname FSMC
-addSignal -h 15 -UNSIGNED -HEX -holdScope fsmc_next_state[5:0]
-addSignal -h 15 -holdScope fsmc_convert_to_display
+addSignal -h 15 -UNSIGNED -HEX -holdScope fsmc_next_state[6:0]
+addSignal -h 15 -holdScope clk
 addGroup "FSM_INPUT" -e FALSE
 aliasname FSMIN
 addSignal -h 15 -UNSIGNED -HEX /harness/u_cal_top/fsmin_curr_state[4:0]
@@ -120,7 +120,7 @@ addGroup "7segment"
 addSignal -h 15 -UNSIGNED -HEX /harness/u_cal_top/digit_cnt_q[1:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope cal_board_digit_ctrl[3:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope cal_board_digit_seg[7:0]
-addGroup "exe" -e FALSE
+addGroup "exe"
 addSignal -h 15 -2COMP -UDEC /harness/u_cal_top/inputa[15:0]
 addSignal -h 15 -2COMP -HEX -holdScope inputb[15:0]
 addSignal -h 15 -2COMP -UDEC -holdScope add_result[15:0]
@@ -128,10 +128,9 @@ addSignal -h 15 -2COMP -UDEC -holdScope sub_result[15:0]
 addSignal -h 15 -2COMP -UDEC -holdScope mul_result[15:0]
 addSignal -h 15 -2COMP -UDEC -holdScope div_result[15:0]
 addSignal -h 15 -holdScope invld_div
-addSignal -h 15 -2COMP -HEX -holdScope inputb[15:0]
-addSignal -h 15 -holdScope op_qual[3]
 addSignal -h 15 -UNSIGNED -UDEC -holdScope result_cvt_pre[15:0]
-addGroup "display stage" -e FALSE
+addSignal -h 15 -holdScope result_qual[15]
+addGroup "display stage"
 addSignal -h 15 /harness/u_cal_top/display_stage_en
 addSignal -h 15 -UNSIGNED -HEX -holdScope display_stage[2:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope display_stage_q[2:0]
@@ -140,14 +139,25 @@ addGroup "convert cnt" -e FALSE
 addSignal -h 15 -UNSIGNED -HEX /harness/u_cal_top/cvt_cnt[3:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope cvt_cnt_q[3:0]
 addSignal -h 15 -holdScope cvt_done
-addSignal -h 15 -holdScope fsmc_convert_to_display
 addGroup "decimal output" -e FALSE
 addSignal -h 15 -UNSIGNED -HEX /harness/u_cal_top/dec_digit_4[3:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_3[3:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_2[3:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_1[3:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_0[3:0]
-addGroup "G17"
+addGroup "Output Display"
+addSignal -h 15 -UNSIGNED -HEX /harness/u_cal_top/dec_digit_4_for_display[3:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_3_for_display[3:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_2_for_display[3:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_1_for_display[3:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_0_for_display[3:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_for_display[19:0]
+addGroup "G14" -e FALSE
+addSignal -h 15 /harness/u_cal_top/dec_digit_41_is0
+addSignal -h 15 -holdScope dec_digit_42_is0
+addSignal -h 15 -holdScope dec_digit_43_is0
+addSignal -h 15 -holdScope dec_digit_4_is0
+addGroup "G15"
 
 ; getSignalForm Scope Hierarchy Status
 ; active file of getSignalForm
