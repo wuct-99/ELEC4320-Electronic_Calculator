@@ -9,16 +9,19 @@ module dflip #(parameter WIDTH = 1 ,
 input clk;
 input rst;
 input [WIDTH - 1: 0] d;
-output reg [WIDTH - 1: 0] q;
+output [WIDTH - 1: 0] q;
+reg [WIDTH -1:0] reg_q;
 
 always @(posedge clk or posedge rst) begin
     if(rst) begin
-        q <= INIT_VALUE;
+        reg_q <= INIT_VALUE;
     end
     else begin
-        q <= d;
+        reg_q <= d;
     end
 end
+
+assign q = reg_q;
 
 endmodule
 

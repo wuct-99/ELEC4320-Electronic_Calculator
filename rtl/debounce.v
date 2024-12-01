@@ -10,9 +10,9 @@ input rst;
 input [WIDTH - 1:0] data_in;
 output [WIDTH - 1:0] data_out;
 
-reg [WIDTH - 1:0] data_d1;
-reg [WIDTH - 1:0] data_d2;
-reg [WIDTH - 1:0] data_d3;
+wire [WIDTH - 1:0] data_d1;
+wire [WIDTH - 1:0] data_d2;
+wire [WIDTH - 1:0] data_d3;
 
 dflip #(WIDTH) debounce_ff1 (.clk(clk), .rst(rst), .d(data_in), .q(data_d1));
 dflip #(WIDTH) debounce_ff2 (.clk(clk), .rst(rst), .d(data_d1), .q(data_d2));

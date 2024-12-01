@@ -41,7 +41,7 @@ wire [3:0] digit3_for_remain;
 wire [`DISP_STG_WIDTH-1:0] total_disp_stage_qual;
 
 //FSME Define
-reg [`FSME_STATE_WIDTH - 1:0] fsme_curr_state;
+wire [`FSME_STATE_WIDTH - 1:0] fsme_curr_state;
 wire [`FSME_STATE_WIDTH - 1:0] fsme_next_state;
 
 wire fsme_idle_to_init;
@@ -85,10 +85,10 @@ assign button_mid  = button_qual[`BUTTON_MID];
 
 wire display_stage_en;
 wire [2:0] display_stage  ;
-reg  [2:0] display_stage_q;
+wire  [2:0] display_stage_q;
 wire display_last_stage;
 //FSMC
-reg [`FSMC_STATE_WIDTH - 1:0] fsmc_curr_state;
+wire [`FSMC_STATE_WIDTH - 1:0] fsmc_curr_state;
 wire [`FSMC_STATE_WIDTH - 1:0] fsmc_next_state;
 
 wire fsmc_idle_to_inputa;
@@ -159,7 +159,7 @@ dflip_en #(`FSMC_STATE_WIDTH,
            `FSMC_STATE_WIDTH'h1) fsmc_state_ff (.clk(clk), .rst(rst), .en(fsmc_state_upd), .d(fsmc_next_state), .q(fsmc_curr_state));
 
 //FSMIN
-reg [`FSMIN_STATE_WIDTH - 1:0] fsmin_curr_state;
+wire [`FSMIN_STATE_WIDTH - 1:0] fsmin_curr_state;
 wire [`FSMIN_STATE_WIDTH - 1:0] fsmin_next_state;
 
 wire fsmin_idle_to_digit0;
@@ -275,14 +275,14 @@ assign sign_d = fsmin_state_rst ? 4'b0000 : sign_q + 1'b1;
 dflip_en sign_ff (.clk(clk), .rst(rst), .en(sign_en), .d(sign_d), .q(sign_q));
 
 //Save input a/b
-reg [`DIGIT_WIDTH - 1 : 0] a_digit0;
-reg [`DIGIT_WIDTH - 1 : 0] a_digit1;
-reg [`DIGIT_WIDTH - 1 : 0] a_digit2;
-reg a_sign;
-reg [`DIGIT_WIDTH - 1 : 0] b_digit0;
-reg [`DIGIT_WIDTH - 1 : 0] b_digit1;
-reg [`DIGIT_WIDTH - 1 : 0] b_digit2;
-reg b_sign;
+wire [`DIGIT_WIDTH - 1 : 0] a_digit0;
+wire [`DIGIT_WIDTH - 1 : 0] a_digit1;
+wire [`DIGIT_WIDTH - 1 : 0] a_digit2;
+wire a_sign;
+wire [`DIGIT_WIDTH - 1 : 0] b_digit0;
+wire [`DIGIT_WIDTH - 1 : 0] b_digit1;
+wire [`DIGIT_WIDTH - 1 : 0] b_digit2;
+wire b_sign;
 
 wire a_digit_en;
 wire b_digit_en;
@@ -301,7 +301,7 @@ dflip_en b_sign_ff (.clk(clk), .rst(rst), .en(b_digit_en), .d(sign_q), .q(b_sign
 
 //7-segment 
 wire [1:0] digit_cnt_d;
-reg [1:0] digit_cnt_q;
+wire [1:0] digit_cnt_q;
 
 wire digit_cnt_en;
 wire digit_cnt_rst;
@@ -359,7 +359,7 @@ assign cal_board_digit_seg = {8{digit_val == `DIGIT_WIDTH'h0}} & 8'b1111_1100 |
 wire switch_en;
 wire [`SWITCH_WIDTH - 1:0] op_qual;
 wire int_result_op;
-reg [`SWITCH_WIDTH - 1:0] switchs_in_exe;
+wire [`SWITCH_WIDTH - 1:0] switchs_in_exe;
 
 assign switch_en = fsmc_next_exe;
 dflip_en #(`SWITCH_WIDTH) switch_ff (.clk(clk), .rst(rst), .en(switch_en), .d(board_cal_switchs), .q(switchs_in_exe));
@@ -446,8 +446,10 @@ wire invld_sqrt;
 
 assign invld_div  = op_qual[`OP_DIV ] & ~(|inputb); 
 assign invld_sqrt = op_qual[`OP_SQRT] & a_sign;     
+assign invld_op   = ~(|op_qual);     
 assign invld_input = invld_div  |
-                     invld_sqrt ;
+                     invld_sqrt |
+                     invld_op   ;
 
 //FSME
 assign fsme_in_idle   = fsme_curr_state[0];
@@ -518,8 +520,8 @@ assign result_cvt_pre = result_qual[15] ? ~result_qual + 16'b1 : result_qual;
 
 
 //Binary to decimal 
-reg [3:0] cvt_cnt;
-reg [3:0] cvt_cnt_q;
+wire [3:0] cvt_cnt;
+wire [3:0] cvt_cnt_q;
 wire cvt_cnt_en;
 wire cvt_cnt_rst;
 
@@ -532,7 +534,7 @@ assign cvt_done = &cvt_cnt_q;
 
 wire [35:0] dec_digit;
 wire [35:0] dec_digit_shift;
-reg [35:0] dec_digit_q;
+wire [35:0] dec_digit_q;
 wire dec_digit_en;
 
 assign dec_digit[15:0]  = dec_digit_q[15:0];
