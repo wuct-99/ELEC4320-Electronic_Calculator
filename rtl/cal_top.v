@@ -558,6 +558,7 @@ assign b_lv1_1_en = init_cnt_q == 2'b0;
 assign b_lv1_2_en = init_cnt_q == 2'b0;
 assign b_lv2_en   = init_cnt_q == 2'b1;
 assign b_lv3_en   = init_cnt_q == 2'b10;
+assign b_lv4_en   = init_cnt_q == 2'b11;
 
 dflip_en #(`RESULT_WIDTH) b_lv1_0_ff (.clk(clk), .rst(rst), .en(b_lv1_0_en), .d(b_lv1_0), .q(b_lv1_0_q));
 dflip_en #(`RESULT_WIDTH) b_lv1_1_ff (.clk(clk), .rst(rst), .en(b_lv1_1_en), .d(b_lv1_1), .q(b_lv1_1_q));
