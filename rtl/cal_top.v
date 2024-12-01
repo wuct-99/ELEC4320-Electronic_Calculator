@@ -83,6 +83,7 @@ wire fsme_in_multi;
 wire fsme_in_done;
 wire fsme_state_upd;
 wire fsme_next_idle;
+wire fsme_next_done;
 //FSMC
 wire [`FSMC_STATE_WIDTH - 1:0] fsmc_curr_state;
 wire [`FSMC_STATE_WIDTH - 1:0] fsmc_next_state;
@@ -155,14 +156,17 @@ wire multi_cyc_op;
 //exe
 wire signed [`RESULT_WIDTH-1:0] add_result;
 wire signed [`RESULT_WIDTH-1:0] sub_result;
-wire signed [`RESULT_WIDTH-1:0] mul_result;
+wire signed [31:0] mul_result;
 wire signed [`RESULT_WIDTH-1:0] div_result;
 //result
 wire exe_pre_done;
 wire cvt_done;
-wire overflow = 1'b0; //FIXME
+wire overflow;
+wire result_en;
 wire signed [`RESULT_WIDTH-1:0] result_qual;
+wire signed [`RESULT_WIDTH-1:0] result_qual_q;
 wire signed [`RESULT_WIDTH-1:0] result_cvt_pre;
+wire signed [`RESULT_WIDTH-1:0] result_cvt_pre_q;
 wire invld_result;
 wire invld_input;
 wire invld_div;
@@ -483,7 +487,7 @@ wire init_cnt_en;
 
 assign init_cnt_rst = fsmc_next_exe; 
 assign init_cnt_d = init_cnt_rst ? 2'b00 : init_cnt_q + 2'b01;
-assign init_cnt_en = ~(&init_cnt_d);
+assign init_cnt_en = fsme_in_init;
 dflip_en #(2) init_cnt_ff (.clk(clk), .rst(rst), .en(init_cnt_en), .d(init_cnt_d), .q(init_cnt_q));
 
 wire [`RESULT_WIDTH-1:0] a_lv1_0;
@@ -494,14 +498,15 @@ wire [`RESULT_WIDTH-1:0] a_lv1_1_q;
 wire [`RESULT_WIDTH-1:0] a_lv1_2_q;
 wire [`RESULT_WIDTH-1:0] a_lv2;
 wire [`RESULT_WIDTH-1:0] a_lv3;
+wire [`RESULT_WIDTH-1:0] a_lv4;
 wire [`RESULT_WIDTH-1:0] a_lv2_q;
-wire [`RESULT_WIDTH-1:0] a_lv3_q;
 
 wire a_lv1_0_en;
 wire a_lv1_1_en;
 wire a_lv1_2_en;
 wire a_lv2_en;
 wire a_lv3_en;
+wire a_lv4_en;
 
 wire [`RESULT_WIDTH-1:0] b_lv1_0;
 wire [`RESULT_WIDTH-1:0] b_lv1_1;
@@ -511,14 +516,15 @@ wire [`RESULT_WIDTH-1:0] b_lv1_1_q;
 wire [`RESULT_WIDTH-1:0] b_lv1_2_q;
 wire [`RESULT_WIDTH-1:0] b_lv2;
 wire [`RESULT_WIDTH-1:0] b_lv3;
+wire [`RESULT_WIDTH-1:0] b_lv4;
 wire [`RESULT_WIDTH-1:0] b_lv2_q;
-wire [`RESULT_WIDTH-1:0] b_lv3_q;
 
 wire b_lv1_0_en;
 wire b_lv1_1_en;
 wire b_lv1_2_en;
 wire b_lv2_en;
 wire b_lv3_en;
+wire b_lv4_en;
 
 assign a_lv1_0 = a_digit1_sl3 + a_digit1_sl1;
 assign a_lv1_1 = a_digit2_sl6 + a_digit2_sl5;
@@ -529,6 +535,7 @@ assign a_lv1_1_en = init_cnt_q == 2'b0;
 assign a_lv1_2_en = init_cnt_q == 2'b0;
 assign a_lv2_en   = init_cnt_q == 2'b1;
 assign a_lv3_en   = init_cnt_q == 2'b10;
+assign a_lv4_en   = init_cnt_q == 2'b11;
 
 dflip_en #(`RESULT_WIDTH) a_lv1_0_ff (.clk(clk), .rst(rst), .en(a_lv1_0_en), .d(a_lv1_0), .q(a_lv1_0_q));
 dflip_en #(`RESULT_WIDTH) a_lv1_1_ff (.clk(clk), .rst(rst), .en(a_lv1_1_en), .d(a_lv1_1), .q(a_lv1_1_q));
@@ -537,8 +544,10 @@ dflip_en #(`RESULT_WIDTH) a_lv1_2_ff (.clk(clk), .rst(rst), .en(a_lv1_2_en), .d(
 assign a_lv2 = a_lv1_0_q + a_lv1_1_q;
 dflip_en #(`RESULT_WIDTH) a_lv2_ff   (.clk(clk), .rst(rst), .en(a_lv2_en), .d(a_lv2), .q(a_lv2_q));
 assign a_lv3 = a_lv2_q + a_lv1_2_q;
-dflip_en #(`RESULT_WIDTH) a_lv3_ff   (.clk(clk), .rst(rst), .en(a_lv3_en), .d(a_lv3), .q(a_lv3_q));
-assign unsign_inputa = a_lv3_q;
+dflip_en #(`RESULT_WIDTH) a_lv3_ff   (.clk(clk), .rst(rst), .en(a_lv3_en), .d(a_lv3), .q(unsign_inputa));
+assign sign_inputa = ~unsign_inputa + 1;
+assign a_lv4 = a_sign ? sign_inputa : unsign_inputa; 
+dflip_en #(`RESULT_WIDTH) a_lv4_ff   (.clk(clk), .rst(rst), .en(a_lv4_en), .d(a_lv4), .q(inputa));
 
 assign b_lv1_0 = b_digit1_sl3 + b_digit1_sl1;
 assign b_lv1_1 = b_digit2_sl6 + b_digit2_sl5;
@@ -557,13 +566,10 @@ dflip_en #(`RESULT_WIDTH) b_lv1_2_ff (.clk(clk), .rst(rst), .en(b_lv1_2_en), .d(
 assign b_lv2 = b_lv1_0_q + b_lv1_1_q;
 dflip_en #(`RESULT_WIDTH) b_lv2_ff   (.clk(clk), .rst(rst), .en(b_lv2_en), .d(b_lv2), .q(b_lv2_q));
 assign b_lv3 = b_lv2_q + b_lv1_2_q;
-dflip_en #(`RESULT_WIDTH) b_lv3_ff   (.clk(clk), .rst(rst), .en(b_lv3_en), .d(b_lv3), .q(b_lv3_q));
-assign unsign_inputb = b_lv3_q;
-
-assign sign_inputa = ~unsign_inputa + 1;
+dflip_en #(`RESULT_WIDTH) b_lv3_ff   (.clk(clk), .rst(rst), .en(b_lv3_en), .d(b_lv3), .q(unsign_inputb));
 assign sign_inputb = ~unsign_inputb + 1;
-assign inputa = a_sign ? sign_inputa : unsign_inputa; 
-assign inputb = b_sign ? sign_inputb : unsign_inputb;
+assign b_lv4 = b_sign ? sign_inputb : unsign_inputb; 
+dflip_en #(`RESULT_WIDTH) b_lv4_ff   (.clk(clk), .rst(rst), .en(b_lv4_en), .d(b_lv4), .q(inputb));
 
 //Check input constraint
 assign invld_div  = op_qual[`OP_DIV ] & ~(|inputb); 
@@ -581,9 +587,9 @@ assign fsme_in_multi  = fsme_curr_state[3];
 assign fsme_in_done   = fsme_curr_state[4];
 
 assign fsme_idle_to_init   = fsme_in_idle   & fsmc_in_exe;
-assign fsme_init_to_single = fsme_in_init   & single_cyc_op & init_cnt_q[1];
-assign fsme_init_to_multi  = fsme_in_init   & multi_cyc_op  & init_cnt_q[1];
-assign fsme_init_to_done   = fsme_in_init   & invld_input   & init_cnt_q[1];
+assign fsme_init_to_single = fsme_in_init   & single_cyc_op & (&init_cnt_q);
+assign fsme_init_to_multi  = fsme_in_init   & multi_cyc_op  & (&init_cnt_q);
+assign fsme_init_to_done   = fsme_in_init   & invld_input   & (&init_cnt_q);
 assign fsme_single_to_done = fsme_in_single ;
 assign fsme_multi_to_done  = fsme_in_multi  & 1'b1; //FIXME
 assign fsme_done_to_idle   = fsme_in_done   ;
@@ -605,6 +611,7 @@ assign fsme_state_upd = fsme_idle_to_init   |
                         fsme_done_to_idle   ;
 
 assign fsme_next_idle = fsme_next_state[0];
+assign fsme_next_done = fsme_next_state[4];
 
 dflip_en #(`FSME_STATE_WIDTH, `FSME_STATE_WIDTH'h1) fsme_state_ff (.clk(clk), 
                                                                    .rst(rst), 
@@ -620,16 +627,43 @@ assign sub_result = inputa - inputb;
 assign mul_result = inputa * inputb;
 assign div_result = inputa / inputb;
 
-//result
-assign invld_result = invld_input | overflow;
-//overflow checking 
-assign result_qual = {`RESULT_WIDTH{op_qual[`OP_ADD]}} & add_result |
-                     {`RESULT_WIDTH{op_qual[`OP_SUB]}} & sub_result |
-                     {`RESULT_WIDTH{op_qual[`OP_MUL]}} & mul_result |
-                     {`RESULT_WIDTH{op_qual[`OP_DIV]}} & div_result ;
+wire [`RESULT_WIDTH-1:0] add_result_q;
+wire [`RESULT_WIDTH-1:0] sub_result_q;
+wire [31:0] mul_result_q;
+wire [`RESULT_WIDTH-1:0] div_result_q;
 
+wire add_result_en;
+wire sub_result_en;
+wire mul_result_en;
+wire div_result_en;
+
+assign add_result_en = fsme_in_single & op_qual[`OP_ADD];
+assign sub_result_en = fsme_in_single & op_qual[`OP_SUB];
+assign mul_result_en = fsme_in_single & op_qual[`OP_MUL];
+assign div_result_en = fsme_in_single & op_qual[`OP_DIV];
+
+dflip_en #(`RESULT_WIDTH) add_result_ff (.clk(clk), .rst(rst), .en(add_result_en), .d(add_result), .q(add_result_q));
+dflip_en #(`RESULT_WIDTH) sub_result_ff (.clk(clk), .rst(rst), .en(sub_result_en), .d(sub_result), .q(sub_result_q));
+dflip_en #(32)            mul_result_ff (.clk(clk), .rst(rst), .en(mul_result_en), .d(mul_result), .q(mul_result_q));
+dflip_en #(`RESULT_WIDTH) div_result_ff (.clk(clk), .rst(rst), .en(div_result_en), .d(div_result), .q(div_result_q));
+
+//result
+assign result_qual = {`RESULT_WIDTH{op_qual[`OP_ADD]}} & add_result_q |
+                     {`RESULT_WIDTH{op_qual[`OP_SUB]}} & sub_result_q |
+                     {`RESULT_WIDTH{op_qual[`OP_MUL]}} & mul_result_q[15:0] |
+                     {`RESULT_WIDTH{op_qual[`OP_DIV]}} & div_result_q ;
 assign result_sign = result_qual[15];
 assign result_cvt_pre = result_qual[15] ? ~result_qual + 16'b1 : result_qual;
+
+assign result_cvt_pre_en = fsme_next_idle;
+dflip_en #(`RESULT_WIDTH) result_ff (.clk(clk), .rst(rst), .en(result_cvt_pre_en), .d(result_cvt_pre), .q(result_cvt_pre_q));
+
+//overflow checking
+wire mul_overflow;
+assign mul_overflow = op_qual[`OP_MUL] & (|mul_result_q[31:16]); 
+assign overflow = mul_overflow;
+assign invld_result = invld_input | overflow;
+
 
 //Binary to decimal convert
 assign cvt_cnt_rst = exe_pre_done;
@@ -645,7 +679,7 @@ assign dec_digit[23:20] = dec_digit_q[23:20] >= 4'h5 ? dec_digit_q[23:20] + 4'h3
 assign dec_digit[27:24] = dec_digit_q[27:24] >= 4'h5 ? dec_digit_q[27:24] + 4'h3 : dec_digit_q[27:24];
 assign dec_digit[31:28] = dec_digit_q[31:28] >= 4'h5 ? dec_digit_q[31:28] + 4'h3 : dec_digit_q[31:28];
 assign dec_digit[35:32] = dec_digit_q[35:31] >= 4'h5 ? dec_digit_q[35:31] + 4'h3 : dec_digit_q[35:31];
-assign dec_digit_shift = ~(|cvt_cnt_q) ? {19'b0, result_cvt_pre, 1'b0} : dec_digit << 1'b1;
+assign dec_digit_shift = ~(|cvt_cnt_q) ? {19'b0, result_cvt_pre_q, 1'b0} : dec_digit << 1'b1;
 assign dec_digit_en = fsmc_in_convert;
 
 dflip_en #(36) dec_digit_ff (.clk(clk), .rst(rst), .en(dec_digit_en), .d(dec_digit_shift), .q(dec_digit_q));
