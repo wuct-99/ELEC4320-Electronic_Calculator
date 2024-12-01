@@ -1,3 +1,4 @@
+//`include "define.v"
 module cal_top(
 	//input
 	clk,
@@ -60,6 +61,22 @@ wire fsme_in_done;
 
 wire fsme_state_upd;
 wire fsme_next_idle;
+
+//clk_display
+wire [9:0] clk_display_cnt_d;
+wire [9:0] clk_display_cnt_q;
+wire clk_display_en;
+wire clk_display_state_d;
+wire clk_display_state_q;
+wire clk_display;
+
+assign clk_display_cnt_d = clk_display_cnt_q + 2'b01;
+dflip #(10) clk_display_cnt_ff (.clk(clk), .rst(rst), .d(clk_display_cnt_d), .q(clk_display_cnt_q));
+
+assign clk_display_en = &clk_display_cnt_q;
+assign clk_display_state_d = ~clk_display_state_q;
+dflip_en #(1) clk_display_state_ff (.clk(clk), .rst(rst), .en(clk_display_en), .d(clk_display_state_d), .q(clk_display_state_q));
+assign clk_display = clk_display_state_q;
 
 //debouncing 
 debounce #(`BUTTON_WIDTH) button_debounce (.clk(clk), .rst(rst), .data_in(board_cal_button), .data_out(debounce_button));
@@ -249,7 +266,7 @@ assign digit0_d = {`DIGIT_WIDTH{fsmin_state_rst                               }}
                   {`DIGIT_WIDTH{button_down & (digit0_q == `DIGIT_WIDTH'b0000)}} & (`DIGIT_WIDTH'b1001) | 
                   {`DIGIT_WIDTH{button_down & (digit0_q >  `DIGIT_WIDTH'b0000)}} & (digit0_q - 4'b1   ) ;
 
-dflip_en #(`DIGIT_WIDTH) digit0_ff (.clk(clk), .rst(rst), .en(digit0_en), .d(digit0_d), .q(digit0_q));
+dflip_en #(`DIGIT_WIDTH) digit0_ff (.clk(clk_display), .rst(rst), .en(digit0_en), .d(digit0_d), .q(digit0_q));
 
 assign digit1_en = (fsmin_in_digit1 & (button_up | button_down)) | fsmin_state_rst;
 assign digit1_d = {`DIGIT_WIDTH{fsmin_state_rst                               }} & (`DIGIT_WIDTH'b0000) | 
@@ -258,7 +275,7 @@ assign digit1_d = {`DIGIT_WIDTH{fsmin_state_rst                               }}
                   {`DIGIT_WIDTH{button_down & (digit1_q == `DIGIT_WIDTH'b0000)}} & (`DIGIT_WIDTH'b1001) | 
                   {`DIGIT_WIDTH{button_down & (digit1_q >  `DIGIT_WIDTH'b0000)}} & (digit1_q - 4'b1   ) ;
 
-dflip_en #(`DIGIT_WIDTH) digit1_ff (.clk(clk), .rst(rst), .en(digit1_en), .d(digit1_d), .q(digit1_q));
+dflip_en #(`DIGIT_WIDTH) digit1_ff (.clk(clk_display), .rst(rst), .en(digit1_en), .d(digit1_d), .q(digit1_q));
 
 assign digit2_en = (fsmin_in_digit2 & (button_up | button_down)) | fsmin_state_rst;
 assign digit2_d = {`DIGIT_WIDTH{fsmin_state_rst                               }} & (`DIGIT_WIDTH'b0000) | 
@@ -267,12 +284,12 @@ assign digit2_d = {`DIGIT_WIDTH{fsmin_state_rst                               }}
                   {`DIGIT_WIDTH{button_down & (digit2_q == `DIGIT_WIDTH'b0000)}} & (`DIGIT_WIDTH'b1001) | 
                   {`DIGIT_WIDTH{button_down & (digit2_q >  `DIGIT_WIDTH'b0000)}} & (digit2_q - 4'b1   ) ;
 
-dflip_en #(`DIGIT_WIDTH) digit2_ff (.clk(clk), .rst(rst), .en(digit2_en), .d(digit2_d), .q(digit2_q));
+dflip_en #(`DIGIT_WIDTH) digit2_ff (.clk(clk_display), .rst(rst), .en(digit2_en), .d(digit2_d), .q(digit2_q));
 
 assign sign_en = (fsmin_in_sign & (button_up | button_down)) | fsmin_state_rst;;
 assign sign_d = fsmin_state_rst ? 4'b0000 : sign_q + 1'b1;
 
-dflip_en sign_ff (.clk(clk), .rst(rst), .en(sign_en), .d(sign_d), .q(sign_q));
+dflip_en sign_ff (.clk(clk_display), .rst(rst), .en(sign_en), .d(sign_d), .q(sign_q));
 
 //Save input a/b
 wire [`DIGIT_WIDTH - 1 : 0] a_digit0;
@@ -299,6 +316,8 @@ dflip_en #(`DIGIT_WIDTH) b_digit2_ff (.clk(clk), .rst(rst), .en(b_digit_en), .d(
 dflip_en a_sign_ff (.clk(clk), .rst(rst), .en(a_digit_en), .d(sign_q), .q(a_sign));
 dflip_en b_sign_ff (.clk(clk), .rst(rst), .en(b_digit_en), .d(sign_q), .q(b_sign));
 
+
+
 //7-segment 
 wire [1:0] digit_cnt_d;
 wire [1:0] digit_cnt_q;
@@ -313,14 +332,15 @@ wire [`DIGIT_WIDTH -1:0] output_int_4digit;
 assign digit_cnt_rst = fsmc_next_inputa | fsmc_next_inputb | fsmc_next_exe | fsmc_next_display; 
 assign digit_cnt_en = fsmc_in_inputa | fsmc_in_inputb | fsmc_in_display & ~invld_result | digit_cnt_rst;
 assign digit_cnt_d = digit_cnt_rst ? 2'b00 : digit_cnt_q + 2'b01;
+
 //digit 0 > digit 1 > digit2 > sign
-dflip_en #(2) digit_cnt_ff (.clk(clk), .rst(rst), .en(digit_cnt_en), .d(digit_cnt_d), .q(digit_cnt_q));
+dflip_en #(2) digit_cnt_ff (.clk(clk_display), .rst(rst), .en(digit_cnt_en), .d(digit_cnt_d), .q(digit_cnt_q));
 
 assign cal_board_digit_ctrl = {`DIGIT_WIDTH{digit_cnt_q == 2'b00}} & `DIGIT_WIDTH'b1110 |
                               {`DIGIT_WIDTH{digit_cnt_q == 2'b01}} & `DIGIT_WIDTH'b1101 |
                               {`DIGIT_WIDTH{digit_cnt_q == 2'b10}} & `DIGIT_WIDTH'b1011 |
                               {`DIGIT_WIDTH{digit_cnt_q == 2'b11}} & `DIGIT_WIDTH'b0111 | 
-                              {`DIGIT_WIDTH{~digit_cnt_en | invld_result}} & `DIGIT_WIDTH'b1111 ;
+                              {`DIGIT_WIDTH{~digit_cnt_en | invld_result & fsmc_in_display}} & `DIGIT_WIDTH'b1111 ;
 
 assign input_digit_curr = {`DIGIT_WIDTH{digit_cnt_q == 2'b00}} & digit0_q |
                           {`DIGIT_WIDTH{digit_cnt_q == 2'b01}} & digit1_q |
@@ -342,19 +362,19 @@ assign digit_val = (fsmc_in_inputa | fsmc_in_inputb) ? input_digit_curr :
                    (fsmc_in_display & (display_stage_q == 3'b1 | display_last_stage & ~(|total_disp_stage_qual))) ? output_int_4digit :
                    (fsmc_in_display & (display_last_stage & total_disp_stage_qual > 3'b0)) ? output_int_remain :  4'ha;
 
-assign cal_board_digit_seg = {8{digit_val == `DIGIT_WIDTH'h0}} & 8'b1111_1100 |
-                             {8{digit_val == `DIGIT_WIDTH'h1}} & 8'b0110_0000 |
-                             {8{digit_val == `DIGIT_WIDTH'h2}} & 8'b1101_1010 |
-                             {8{digit_val == `DIGIT_WIDTH'h3}} & 8'b1111_0010 |
-                             {8{digit_val == `DIGIT_WIDTH'h4}} & 8'b0110_0110 |
-                             {8{digit_val == `DIGIT_WIDTH'h5}} & 8'b1011_0110 |
-                             {8{digit_val == `DIGIT_WIDTH'h6}} & 8'b1011_1110 |
-                             {8{digit_val == `DIGIT_WIDTH'h7}} & 8'b1110_0000 |
-                             {8{digit_val == `DIGIT_WIDTH'h8}} & 8'b1111_1110 |
-                             {8{digit_val == `DIGIT_WIDTH'h9}} & 8'b1110_0110 |
-                             {8{digit_val == `DIGIT_WIDTH'ha}} & 8'b0000_0000 | // None
-                             {8{digit_val == `DIGIT_WIDTH'hb}} & 8'b0000_0010 | // "-"; 
-                             {8{digit_val == `DIGIT_WIDTH'hc}} & 8'b0000_0001 ; // "."
+assign cal_board_digit_seg = {8{digit_val == `DIGIT_WIDTH'h0}} & 8'b0000_0011 |         
+                             {8{digit_val == `DIGIT_WIDTH'h1}} & 8'b1001_1111 |         
+                             {8{digit_val == `DIGIT_WIDTH'h2}} & 8'b0010_0101 |         
+                             {8{digit_val == `DIGIT_WIDTH'h3}} & 8'b0000_1101 |         
+                             {8{digit_val == `DIGIT_WIDTH'h4}} & 8'b1001_1001 |         
+                             {8{digit_val == `DIGIT_WIDTH'h5}} & 8'b0100_1001 |         
+                             {8{digit_val == `DIGIT_WIDTH'h6}} & 8'b0100_0001 |         
+                             {8{digit_val == `DIGIT_WIDTH'h7}} & 8'b0001_1111 |         
+                             {8{digit_val == `DIGIT_WIDTH'h8}} & 8'b0000_0001 |         
+                             {8{digit_val == `DIGIT_WIDTH'h9}} & 8'b0001_1001 |         
+                             {8{digit_val == `DIGIT_WIDTH'ha}} & 8'b1111_1111 | // None 
+                             {8{digit_val == `DIGIT_WIDTH'hb}} & 8'b1111_1101 | // "-"; 
+                             {8{digit_val == `DIGIT_WIDTH'hc}} & 8'b1111_1110 ; // "."  
 //Operation decode
 wire switch_en;
 wire [`SWITCH_WIDTH - 1:0] op_qual;
@@ -443,6 +463,7 @@ assign inputb = b_sign ? sign_inputb : unsign_inputb;
 wire invld_input;
 wire invld_div;
 wire invld_sqrt;
+wire invld_op;
 
 assign invld_div  = op_qual[`OP_DIV ] & ~(|inputb); 
 assign invld_sqrt = op_qual[`OP_SQRT] & a_sign;     
@@ -542,9 +563,10 @@ assign dec_digit[19:16] = dec_digit_q[19:16] >= 4'h5 ? dec_digit_q[19:16] + 4'h3
 assign dec_digit[23:20] = dec_digit_q[23:20] >= 4'h5 ? dec_digit_q[23:20] + 4'h3 : dec_digit_q[23:20];
 assign dec_digit[27:24] = dec_digit_q[27:24] >= 4'h5 ? dec_digit_q[27:24] + 4'h3 : dec_digit_q[27:24];
 assign dec_digit[31:28] = dec_digit_q[31:28] >= 4'h5 ? dec_digit_q[31:28] + 4'h3 : dec_digit_q[31:28];
-assign dec_digit[35:31] = dec_digit_q[35:31] >= 4'h5 ? dec_digit_q[35:31] + 4'h3 : dec_digit_q[35:31];
+assign dec_digit[35:32] = dec_digit_q[35:31] >= 4'h5 ? dec_digit_q[35:31] + 4'h3 : dec_digit_q[35:31];
 assign dec_digit_shift = ~(|cvt_cnt_q) ? {19'b0, result_cvt_pre, 1'b0} : dec_digit << 1'b1;
 assign dec_digit_en = fsmc_in_convert;
+
 dflip_en #(36) dec_digit_ff (.clk(clk), .rst(rst), .en(dec_digit_en), .d(dec_digit_shift), .q(dec_digit_q));
 
 wire [3:0] dec_digit_4;
