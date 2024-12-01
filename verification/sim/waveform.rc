@@ -2,7 +2,7 @@ Magic 271485
 Revision Verdi_V-2023.12
 
 ; Window Layout <x> <y> <width> <height> <signalwidth> <valuewidth>
-viewPort 0 25 2560 579 285 65
+viewPort 0 25 1920 342 285 65
 
 ; File list:
 ; openDirFile [-d delimiter] [-s time_offset] [-rf auto_bus_rule_file] path_name file_name
@@ -16,16 +16,16 @@ signalSpacing 5
 
 ; windowTimeUnit is used for zoom, cursor & marker
 ; waveform viewport range
-zoom 63400.863255 64467.726489
-cursor 63470.000000
+zoom 0.000000 101000.000000
+cursor 10150.000000
 marker -10140.000000
 
 ; user define markers
 ; userMarker time_pos marker_name color linestyle
 ; visible top row signal index
-top 41
+top 4
 ; marker line index
-markerPos 54
+markerPos 7
 
 ; event list
 ; addEvent event_name event_expression
@@ -68,7 +68,7 @@ nalias INIT		2		NULL
 nalias DONE		16		NULL
 nalias MULTIPLE		8		NULL
 
-addGroup "INPUT" -e FALSE
+addGroup "INPUT"
 activeDirFile "" "/dfs/usrhome/ctwu/Desktop/ELEC4320/verification/sim/sim_test/wave/tc_sanity_1.fsdb"
 addSignal -h 15 -UNSIGNED -HEX /harness/u_cal_top/board_cal_button[4:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope board_cal_switchs[14:0]
@@ -77,12 +77,14 @@ addSignal -h 15 -holdScope button_down
 addSignal -h 15 -holdScope button_left
 addSignal -h 15 -holdScope button_right
 addSignal -h 15 -holdScope button_mid
-addGroup "FSMC"
+addGroup "OUTPUT"
+addSignal -h 15 /harness/u_cal_top/cal_board_exe_done
+addSignal -h 15 -UNSIGNED -HEX -holdScope cal_board_display_stage[2:0]
+addGroup "FSMC" -e FALSE
 aliasname FSMC
 addSignal -h 15 -UNSIGNED -HEX /harness/u_cal_top/fsmc_curr_state[6:0]
 aliasname FSMC
 addSignal -h 15 -UNSIGNED -HEX -holdScope fsmc_next_state[6:0]
-addSignal -h 15 -holdScope clk
 addGroup "FSM_INPUT" -e FALSE
 aliasname FSMIN
 addSignal -h 15 -UNSIGNED -HEX /harness/u_cal_top/fsmin_curr_state[4:0]
@@ -95,7 +97,7 @@ aliasname FSME
 addSignal -h 15 -UNSIGNED -HEX /harness/u_cal_top/fsme_curr_state[4:0]
 aliasname FSME
 addSignal -h 15 -UNSIGNED -HEX -holdScope fsme_next_state[4:0]
-addGroup "digit"
+addGroup "digit" -e FALSE
 addSignal -expanded -h 15 -UNSIGNED -HEX /harness/u_cal_top/digit0_q[3:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope digit1_q[3:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope digit2_q[3:0]
@@ -117,10 +119,11 @@ addSignal -h 15 -holdScope b_sign
 addSignal -h 15 -UNSIGNED -UDEC -holdScope unsign_inputb[15:0]
 addSignal -h 15 -2COMP -UDEC -holdScope sign_inputb[15:0]
 addGroup "7segment"
-addSignal -h 15 -UNSIGNED -HEX /harness/u_cal_top/digit_cnt_q[1:0]
+addSignal -h 15 /harness/u_cal_top/clk_display
+addSignal -h 15 -UNSIGNED -HEX -holdScope digit_cnt_q[1:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope cal_board_digit_ctrl[3:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope cal_board_digit_seg[7:0]
-addGroup "exe"
+addGroup "exe" -e FALSE
 addSignal -h 15 -2COMP -UDEC /harness/u_cal_top/inputa[15:0]
 addSignal -h 15 -2COMP -HEX -holdScope inputb[15:0]
 addSignal -h 15 -2COMP -UDEC -holdScope add_result[15:0]
@@ -145,7 +148,7 @@ addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_3[3:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_2[3:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_1[3:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_0[3:0]
-addGroup "Output Display"
+addGroup "Output Display" -e FALSE
 addSignal -h 15 -UNSIGNED -HEX /harness/u_cal_top/dec_digit_4_for_display[3:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_3_for_display[3:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_2_for_display[3:0]
@@ -157,7 +160,7 @@ addSignal -h 15 /harness/u_cal_top/dec_digit_41_is0
 addSignal -h 15 -holdScope dec_digit_42_is0
 addSignal -h 15 -holdScope dec_digit_43_is0
 addSignal -h 15 -holdScope dec_digit_4_is0
-addGroup "G15"
+addGroup "G16"
 
 ; getSignalForm Scope Hierarchy Status
 ; active file of getSignalForm
