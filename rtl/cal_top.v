@@ -482,6 +482,13 @@ assign init_cnt_d = init_cnt_rst ? 2'b00 : init_cnt_q + 2'b01;
 assign init_cnt_en = fsme_in_init;
 dflip_en #(2) init_cnt_ff (.clk(clk), .rst(rst), .en(init_cnt_en), .d(init_cnt_d), .q(init_cnt_q));
 
+assign init_lv1_0_en = init_cnt_q == 2'b0;
+assign init_lv1_1_en = init_cnt_q == 2'b0;
+assign init_lv1_2_en = init_cnt_q == 2'b0;
+assign init_lv2_en   = init_cnt_q == 2'b1;
+assign init_lv3_en   = init_cnt_q == 2'b10;
+assign init_lv4_en   = init_cnt_q == 2'b11;
+
 wire [`RESULT_WIDTH-1:0] a_lv1_0;
 wire [`RESULT_WIDTH-1:0] a_lv1_1;
 wire [`RESULT_WIDTH-1:0] a_lv1_2;
@@ -492,13 +499,6 @@ wire [`RESULT_WIDTH-1:0] a_lv2;
 wire [`RESULT_WIDTH-1:0] a_lv3;
 wire [`RESULT_WIDTH-1:0] a_lv4;
 wire [`RESULT_WIDTH-1:0] a_lv2_q;
-
-wire a_lv1_0_en;
-wire a_lv1_1_en;
-wire a_lv1_2_en;
-wire a_lv2_en;
-wire a_lv3_en;
-wire a_lv4_en;
 
 wire [`RESULT_WIDTH-1:0] b_lv1_0;
 wire [`RESULT_WIDTH-1:0] b_lv1_1;
@@ -511,58 +511,38 @@ wire [`RESULT_WIDTH-1:0] b_lv3;
 wire [`RESULT_WIDTH-1:0] b_lv4;
 wire [`RESULT_WIDTH-1:0] b_lv2_q;
 
-wire b_lv1_0_en;
-wire b_lv1_1_en;
-wire b_lv1_2_en;
-wire b_lv2_en;
-wire b_lv3_en;
-wire b_lv4_en;
-
 assign a_lv1_0 = a_digit1_sl3 + a_digit1_sl1;
 assign a_lv1_1 = a_digit2_sl6 + a_digit2_sl5;
 assign a_lv1_2 = a_digit0_sl0 + a_digit2_sl2;
 
-assign a_lv1_0_en = init_cnt_q == 2'b0;
-assign a_lv1_1_en = init_cnt_q == 2'b0;
-assign a_lv1_2_en = init_cnt_q == 2'b0;
-assign a_lv2_en   = init_cnt_q == 2'b1;
-assign a_lv3_en   = init_cnt_q == 2'b10;
-assign a_lv4_en   = init_cnt_q == 2'b11;
 
-dflip_en #(`RESULT_WIDTH) a_lv1_0_ff (.clk(clk), .rst(rst), .en(a_lv1_0_en), .d(a_lv1_0), .q(a_lv1_0_q));
-dflip_en #(`RESULT_WIDTH) a_lv1_1_ff (.clk(clk), .rst(rst), .en(a_lv1_1_en), .d(a_lv1_1), .q(a_lv1_1_q));
-dflip_en #(`RESULT_WIDTH) a_lv1_2_ff (.clk(clk), .rst(rst), .en(a_lv1_2_en), .d(a_lv1_2), .q(a_lv1_2_q));
+dflip_en #(`RESULT_WIDTH) a_lv1_0_ff (.clk(clk), .rst(rst), .en(init_lv1_0_en), .d(a_lv1_0), .q(a_lv1_0_q));
+dflip_en #(`RESULT_WIDTH) a_lv1_1_ff (.clk(clk), .rst(rst), .en(init_lv1_1_en), .d(a_lv1_1), .q(a_lv1_1_q));
+dflip_en #(`RESULT_WIDTH) a_lv1_2_ff (.clk(clk), .rst(rst), .en(init_lv1_2_en), .d(a_lv1_2), .q(a_lv1_2_q));
 
 assign a_lv2 = a_lv1_0_q + a_lv1_1_q;
-dflip_en #(`RESULT_WIDTH) a_lv2_ff   (.clk(clk), .rst(rst), .en(a_lv2_en), .d(a_lv2), .q(a_lv2_q));
+dflip_en #(`RESULT_WIDTH) a_lv2_ff   (.clk(clk), .rst(rst), .en(init_lv2_en), .d(a_lv2), .q(a_lv2_q));
 assign a_lv3 = a_lv2_q + a_lv1_2_q;
-dflip_en #(`RESULT_WIDTH) a_lv3_ff   (.clk(clk), .rst(rst), .en(a_lv3_en), .d(a_lv3), .q(unsign_inputa));
+dflip_en #(`RESULT_WIDTH) a_lv3_ff   (.clk(clk), .rst(rst), .en(init_lv3_en), .d(a_lv3), .q(unsign_inputa));
 assign sign_inputa = ~unsign_inputa + 1;
 assign a_lv4 = a_sign ? sign_inputa : unsign_inputa; 
-dflip_en #(`RESULT_WIDTH) a_lv4_ff   (.clk(clk), .rst(rst), .en(a_lv4_en), .d(a_lv4), .q(inputa));
+dflip_en #(`RESULT_WIDTH) a_lv4_ff   (.clk(clk), .rst(rst), .en(init_lv4_en), .d(a_lv4), .q(inputa));
 
 assign b_lv1_0 = b_digit1_sl3 + b_digit1_sl1;
 assign b_lv1_1 = b_digit2_sl6 + b_digit2_sl5;
 assign b_lv1_2 = b_digit0_sl0 + b_digit2_sl2;
 
-assign b_lv1_0_en = init_cnt_q == 2'b0;
-assign b_lv1_1_en = init_cnt_q == 2'b0;
-assign b_lv1_2_en = init_cnt_q == 2'b0;
-assign b_lv2_en   = init_cnt_q == 2'b1;
-assign b_lv3_en   = init_cnt_q == 2'b10;
-assign b_lv4_en   = init_cnt_q == 2'b11;
-
-dflip_en #(`RESULT_WIDTH) b_lv1_0_ff (.clk(clk), .rst(rst), .en(b_lv1_0_en), .d(b_lv1_0), .q(b_lv1_0_q));
-dflip_en #(`RESULT_WIDTH) b_lv1_1_ff (.clk(clk), .rst(rst), .en(b_lv1_1_en), .d(b_lv1_1), .q(b_lv1_1_q));
-dflip_en #(`RESULT_WIDTH) b_lv1_2_ff (.clk(clk), .rst(rst), .en(b_lv1_2_en), .d(b_lv1_2), .q(b_lv1_2_q));
+dflip_en #(`RESULT_WIDTH) b_lv1_0_ff (.clk(clk), .rst(rst), .en(init_lv1_0_en), .d(b_lv1_0), .q(b_lv1_0_q));
+dflip_en #(`RESULT_WIDTH) b_lv1_1_ff (.clk(clk), .rst(rst), .en(init_lv1_1_en), .d(b_lv1_1), .q(b_lv1_1_q));
+dflip_en #(`RESULT_WIDTH) b_lv1_2_ff (.clk(clk), .rst(rst), .en(init_lv1_2_en), .d(b_lv1_2), .q(b_lv1_2_q));
 
 assign b_lv2 = b_lv1_0_q + b_lv1_1_q;
-dflip_en #(`RESULT_WIDTH) b_lv2_ff   (.clk(clk), .rst(rst), .en(b_lv2_en), .d(b_lv2), .q(b_lv2_q));
+dflip_en #(`RESULT_WIDTH) b_lv2_ff   (.clk(clk), .rst(rst), .en(init_lv2_en), .d(b_lv2), .q(b_lv2_q));
 assign b_lv3 = b_lv2_q + b_lv1_2_q;
-dflip_en #(`RESULT_WIDTH) b_lv3_ff   (.clk(clk), .rst(rst), .en(b_lv3_en), .d(b_lv3), .q(unsign_inputb));
+dflip_en #(`RESULT_WIDTH) b_lv3_ff   (.clk(clk), .rst(rst), .en(init_lv3_en), .d(b_lv3), .q(unsign_inputb));
 assign sign_inputb = ~unsign_inputb + 1;
 assign b_lv4 = b_sign ? sign_inputb : unsign_inputb; 
-dflip_en #(`RESULT_WIDTH) b_lv4_ff   (.clk(clk), .rst(rst), .en(b_lv4_en), .d(b_lv4), .q(inputb));
+dflip_en #(`RESULT_WIDTH) b_lv4_ff   (.clk(clk), .rst(rst), .en(init_lv4_en), .d(b_lv4), .q(inputb));
 
 //Check input constraint
 assign invld_div  = op_qual[`OP_DIV ] & ~(|inputb); 
