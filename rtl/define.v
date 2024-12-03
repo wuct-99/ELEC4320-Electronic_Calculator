@@ -21,6 +21,14 @@
 `define FSME_DONE   5'h10
 `define FSME_STATE_WIDTH 5
 
+`define FSMDIV_IDLE   4'h1
+`define FSMDIV_INIT   4'h2
+`define FSMDIV_EXE    4'h4
+`define FSMDIV_DONE   4'h8
+`define FSMDIV_STATE_WIDTH 4
+
+
+
 `define BUTTON_LEFT  0 //5'b0_0001
 `define BUTTON_RIGHT 1 //5'b0_0010
 `define BUTTON_UP    2 //5'b0_0100
