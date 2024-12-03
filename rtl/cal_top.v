@@ -650,7 +650,7 @@ assign dec_digit[19:16] = dec_digit_q[19:16] >= 4'h5 ? dec_digit_q[19:16] + 4'h3
 assign dec_digit[23:20] = dec_digit_q[23:20] >= 4'h5 ? dec_digit_q[23:20] + 4'h3 : dec_digit_q[23:20];
 assign dec_digit[27:24] = dec_digit_q[27:24] >= 4'h5 ? dec_digit_q[27:24] + 4'h3 : dec_digit_q[27:24];
 assign dec_digit[31:28] = dec_digit_q[31:28] >= 4'h5 ? dec_digit_q[31:28] + 4'h3 : dec_digit_q[31:28];
-assign dec_digit[35:32] = dec_digit_q[35:31] >= 4'h5 ? dec_digit_q[35:31] + 4'h3 : dec_digit_q[35:31];
+assign dec_digit[35:32] = dec_digit_q[35:32] >= 4'h5 ? dec_digit_q[35:32] + 4'h3 : dec_digit_q[35:32];
 assign dec_digit_shift = ~(|cvt_cnt_q) ? {19'b0, result_cvt_pre_q, 1'b0} : dec_digit << 1'b1;
 assign dec_digit_en = fsmc_in_convert;
 
@@ -659,7 +659,7 @@ dflip_en #(36) dec_digit_ff (.clk(clk), .rst(rst), .en(dec_digit_en), .d(dec_dig
 assign dec_digit_1 = dec_digit_q[23:20];
 assign dec_digit_2 = dec_digit_q[27:24];
 assign dec_digit_3 = dec_digit_q[31:28];
-assign dec_digit_4 = dec_digit_q[35:31];
+assign dec_digit_4 = dec_digit_q[35:32];
 
 //display digit
 assign dec_digit_4_is0  = ~(|dec_digit_4);
