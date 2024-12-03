@@ -83,7 +83,6 @@ wire fsme_in_multi;
 wire fsme_in_done;
 wire fsme_state_upd;
 wire fsme_next_idle;
-wire fsme_next_done;
 //FSMC
 wire [`FSMC_STATE_WIDTH - 1:0] fsmc_curr_state;
 wire [`FSMC_STATE_WIDTH - 1:0] fsmc_next_state;
@@ -105,8 +104,6 @@ wire fsmc_in_display;
 wire fsmc_next_inputa;
 wire fsmc_next_inputb;
 wire fsmc_next_exe   ;
-wire fsmc_next_convert;
-wire fsmc_next_setup  ;
 wire fsmc_next_display;
 //FSMIN
 wire [`FSMIN_STATE_WIDTH - 1:0] fsmin_curr_state;
@@ -162,9 +159,7 @@ wire signed [`RESULT_WIDTH-1:0] div_result;
 wire exe_pre_done;
 wire cvt_done;
 wire overflow;
-wire result_en;
 wire signed [`RESULT_WIDTH-1:0] result_qual;
-wire signed [`RESULT_WIDTH-1:0] result_qual_q;
 wire signed [`RESULT_WIDTH-1:0] result_cvt_pre;
 wire signed [`RESULT_WIDTH-1:0] result_cvt_pre_q;
 wire invld_result;
@@ -186,7 +181,6 @@ wire [3:0] dec_digit_4;
 wire [3:0] dec_digit_3;
 wire [3:0] dec_digit_2;
 wire [3:0] dec_digit_1;
-wire [3:0] dec_digit_0;
 wire dec_digit_4_is0;
 wire dec_digit_43_is0;
 wire dec_digit_42_is0;
@@ -283,8 +277,6 @@ assign fsmc_next_state = {`FSMC_STATE_WIDTH{fsmc_idle_to_inputa   }} & `FSMC_INP
 assign fsmc_next_inputa  = fsmc_next_state[1];
 assign fsmc_next_inputb  = fsmc_next_state[2];
 assign fsmc_next_exe     = fsmc_next_state[3];
-assign fsmc_next_convert = fsmc_next_state[4];
-assign fsmc_next_setup   = fsmc_next_state[5];
 assign fsmc_next_display = fsmc_next_state[6];
 
 dflip_en #(`FSMC_STATE_WIDTH, 
@@ -612,7 +604,6 @@ assign fsme_state_upd = fsme_idle_to_init   |
                         fsme_done_to_idle   ;
 
 assign fsme_next_idle = fsme_next_state[0];
-assign fsme_next_done = fsme_next_state[4];
 
 dflip_en #(`FSME_STATE_WIDTH, `FSME_STATE_WIDTH'h1) fsme_state_ff (.clk(clk), 
                                                                    .rst(rst), 
@@ -685,7 +676,6 @@ assign dec_digit_en = fsmc_in_convert;
 
 dflip_en #(36) dec_digit_ff (.clk(clk), .rst(rst), .en(dec_digit_en), .d(dec_digit_shift), .q(dec_digit_q));
 
-assign dec_digit_0 = dec_digit_q[19:16];
 assign dec_digit_1 = dec_digit_q[23:20];
 assign dec_digit_2 = dec_digit_q[27:24];
 assign dec_digit_3 = dec_digit_q[31:28];
@@ -721,6 +711,6 @@ assign display_stage_en = fsmc_in_display & button_mid & ~display_last_stage | f
 assign display_stage = fsmc_in_setup ? total_disp_stage_qual : display_stage_q - 1'b1;
 assign display_last_stage = ~(|display_stage_q);
 dflip_en #(`DISP_STG_WIDTH) display_stage_ff (.clk(clk), .rst(rst), .en(display_stage_en), .d(display_stage), .q(display_stage_q));
-assign cal_board_display_stage = display_stage_q;
+assign cal_board_display_stage = display_stage_q + 3'b1;
 
 endmodule
