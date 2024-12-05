@@ -45,15 +45,7 @@ wire digit0_en;
 wire digit1_en;
 wire digit2_en;
 wire sign_en;
-//7-segment driver
-wire [1:0] digit_cnt_d;
-wire [1:0] digit_cnt_q;
-wire digit_cnt_en;
-wire digit_cnt_rst;
-wire [`DIGIT_WIDTH- 1:0] digit_val;
-wire [`DIGIT_WIDTH -1:0] input_digit_curr;
-wire [`DIGIT_WIDTH -1:0] output_int_4digit;
-wire [`DIGIT_WIDTH -1:0] output_int_remain;
+
 //input a/b
 wire [`DIGIT_WIDTH - 1 : 0] a_digit0;
 wire [`DIGIT_WIDTH - 1 : 0] a_digit1;
@@ -65,6 +57,19 @@ wire [`DIGIT_WIDTH - 1 : 0] b_digit2;
 wire b_sign;
 wire a_digit_en;
 wire b_digit_en;
+
+//7-segment driver
+wire [1:0] digit_cnt_d;
+wire [1:0] digit_cnt_q;
+wire digit_cnt_en;
+wire digit_cnt_rst;
+wire [`DIGIT_WIDTH- 1:0] digit_val;
+wire [`DIGIT_WIDTH -1:0] input_digit_curr;
+
+wire [`DIGIT_WIDTH -1:0] output_int_lv0;
+wire [`DIGIT_WIDTH -1:0] output_int_lv1;
+wire [`DIGIT_WIDTH -1:0] output_int_lv2;
+
 
 //FSME Define
 wire [`FSME_STATE_WIDTH - 1:0] fsme_curr_state;
@@ -151,9 +156,9 @@ wire cvt_done;
 
 
 wire overflow;
-wire signed [`RESULT_WIDTH-1:0] result_qual;
-wire signed [`RESULT_WIDTH-1:0] result_cvt_pre;
-wire signed [`RESULT_WIDTH-1:0] result_cvt_pre_q;
+wire signed [31:0] result_qual;
+wire signed [31:0] result_cvt_pre;
+wire signed [31:0] result_cvt_pre_q;
 wire invld_result;
 wire invld_input;
 wire invld_div;
@@ -161,36 +166,50 @@ wire invld_sqrt;
 wire invld_op;
 
 //binary to decimal
-wire [3:0] cvt_cnt;
-wire [3:0] cvt_cnt_q;
+wire [4:0] cvt_cnt;
+wire [4:0] cvt_cnt_q;
 wire cvt_cnt_en;
 wire cvt_cnt_rst;
-wire [35:0] dec_digit;
-wire [35:0] dec_digit_shift;
-wire [35:0] dec_digit_q;
-wire dec_digit_en;
-wire [3:0] dec_digit_4;
-wire [3:0] dec_digit_3;
-wire [3:0] dec_digit_2;
-wire [3:0] dec_digit_1;
-wire dec_digit_4_is0;
-wire dec_digit_43_is0;
-wire dec_digit_42_is0;
-wire dec_digit_41_is0;
+
 wire result_sign;
-wire [3:0] dec_digit_4_for_display;
-wire [3:0] dec_digit_3_for_display;
-wire [3:0] dec_digit_2_for_display;
-wire [3:0] dec_digit_1_for_display;
-wire [3:0] dec_digit_0_for_display;
-wire [3:0] sign_for_remain;
-wire [3:0] digit3_for_remain;
+wire [3:0] int_digit_9_for_display;
+wire [3:0] int_digit_8_for_display;
+wire [3:0] int_digit_7_for_display;
+wire [3:0] int_digit_6_for_display;
+wire [3:0] int_digit_5_for_display;
+wire [3:0] int_digit_4_for_display;
+wire [3:0] int_digit_3_for_display;
+wire [3:0] int_digit_2_for_display;
+wire [3:0] int_digit_1_for_display;
+wire [3:0] int_digit_0_for_display;
+wire [3:0] frac_digit_9_for_display;
+wire [3:0] frac_digit_8_for_display;
+wire [3:0] frac_digit_7_for_display;
+wire [3:0] frac_digit_6_for_display;
+wire [3:0] frac_digit_5_for_display;
+wire [3:0] frac_digit_4_for_display;
+wire [3:0] frac_digit_3_for_display;
+wire [3:0] frac_digit_2_for_display;
+wire [3:0] frac_digit_1_for_display;
+wire [3:0] frac_digit_0_for_display;
+
+//wire [3:0] sign_for_remain;
+//wire [3:0] digit3_for_remain;
+wire [3:0] int_sign_for_lv1;
+wire [3:0] int_digit2_for_lv1;
+wire [3:0] int_digit1_for_lv1;
+wire [3:0] int_digit0_for_lv1;
+wire [3:0] int_sign_for_lv2;
+wire [3:0] int_digit2_for_lv2;
+wire [3:0] int_digit1_for_lv2;
+wire [3:0] int_digit0_for_lv2;
 
 //display stage
-wire [19:0] dec_digit_for_display;
 wire [`DISP_STG_WIDTH-1:0] total_disp_stage_pre;
 wire [`DISP_STG_WIDTH-1:0] total_disp_stage_qual;
-wire [2:0] int_stage; 
+wire [2:0] int_stage_final; 
+
+
 wire display_stage_en;
 wire [2:0] display_stage  ;
 wire [2:0] display_stage_q;
@@ -377,32 +396,50 @@ assign digit_cnt_d = digit_cnt_rst ? 2'b00 : digit_cnt_q + 2'b01;
 //digit 0 > digit 1 > digit2 > sign
 dflip_en #(2) digit_cnt_ff (.clk(clk), .rst(rst), .en(digit_cnt_en), .d(digit_cnt_d), .q(digit_cnt_q));
 
-assign cal_board_digit_ctrl = {`DIGIT_WIDTH{digit_cnt_q == 2'b00}} & `DIGIT_WIDTH'b1110 |
-                              {`DIGIT_WIDTH{digit_cnt_q == 2'b01}} & `DIGIT_WIDTH'b1101 |
-                              {`DIGIT_WIDTH{digit_cnt_q == 2'b10}} & `DIGIT_WIDTH'b1011 |
-                              {`DIGIT_WIDTH{digit_cnt_q == 2'b11}} & `DIGIT_WIDTH'b0111 | 
+wire digit_cnt_id0;
+wire digit_cnt_id1;
+wire digit_cnt_id2;
+wire digit_cnt_id3;
+
+assign digit_cnt_id0 = digit_cnt_q == 2'b00;
+assign digit_cnt_id1 = digit_cnt_q == 2'b01;
+assign digit_cnt_id2 = digit_cnt_q == 2'b10;
+assign digit_cnt_id3 = digit_cnt_q == 2'b11;
+
+assign cal_board_digit_ctrl = {`DIGIT_WIDTH{digit_cnt_id0}} & `DIGIT_WIDTH'b1110 |
+                              {`DIGIT_WIDTH{digit_cnt_id1}} & `DIGIT_WIDTH'b1101 |
+                              {`DIGIT_WIDTH{digit_cnt_id2}} & `DIGIT_WIDTH'b1011 |
+                              {`DIGIT_WIDTH{digit_cnt_id3}} & `DIGIT_WIDTH'b0111 | 
                               {`DIGIT_WIDTH{~digit_cnt_en | invld_result & fsmc_in_display}} & `DIGIT_WIDTH'b1111 ;
 
-assign input_digit_curr = {`DIGIT_WIDTH{digit_cnt_q == 2'b00}} & digit0_q |
-                          {`DIGIT_WIDTH{digit_cnt_q == 2'b01}} & digit1_q |
-                          {`DIGIT_WIDTH{digit_cnt_q == 2'b10}} & digit2_q |
-                          {`DIGIT_WIDTH{digit_cnt_q == 2'b11}} & {3'b101, sign_q} ;
+assign input_digit_curr = {`DIGIT_WIDTH{digit_cnt_id0}} & digit0_q |
+                          {`DIGIT_WIDTH{digit_cnt_id1}} & digit1_q |
+                          {`DIGIT_WIDTH{digit_cnt_id2}} & digit2_q |
+                          {`DIGIT_WIDTH{digit_cnt_id3}} & {3'b101, sign_q} ;
 
-assign output_int_4digit = {`DIGIT_WIDTH{digit_cnt_q == 2'b00}} & dec_digit_2_for_display |
-                           {`DIGIT_WIDTH{digit_cnt_q == 2'b01}} & dec_digit_3_for_display |
-                           {`DIGIT_WIDTH{digit_cnt_q == 2'b10}} & dec_digit_4_for_display |
-                           {`DIGIT_WIDTH{digit_cnt_q == 2'b11}} & {3'b101, result_sign}   ;
+assign output_int_lv0 = {`DIGIT_WIDTH{digit_cnt_id0}} & int_digit_7_for_display |
+                        {`DIGIT_WIDTH{digit_cnt_id1}} & int_digit_8_for_display |
+                        {`DIGIT_WIDTH{digit_cnt_id2}} & int_digit_9_for_display |
+                        {`DIGIT_WIDTH{digit_cnt_id3}} & {3'b101, result_sign}   ;
 
-assign output_int_remain = {`DIGIT_WIDTH{digit_cnt_q == 2'b00}} & 4'ha |
-                           {`DIGIT_WIDTH{digit_cnt_q == 2'b01}} & 4'ha |
-                           {`DIGIT_WIDTH{digit_cnt_q == 2'b10}} & digit3_for_remain  |
-                           {`DIGIT_WIDTH{digit_cnt_q == 2'b11}} & sign_for_remain;
+assign output_int_lv1 = {`DIGIT_WIDTH{digit_cnt_id0}} & int_digit0_for_lv1 |
+                        {`DIGIT_WIDTH{digit_cnt_id1}} & int_digit1_for_lv1 |
+                        {`DIGIT_WIDTH{digit_cnt_id2}} & int_digit2_for_lv1 |
+                        {`DIGIT_WIDTH{digit_cnt_id3}} & int_sign_for_lv1 ;
 
-//FIXME print output
+assign output_int_lv2 = {`DIGIT_WIDTH{digit_cnt_id0}} & int_digit0_for_lv2 |
+                        {`DIGIT_WIDTH{digit_cnt_id1}} & int_digit1_for_lv2 |
+                        {`DIGIT_WIDTH{digit_cnt_id2}} & int_digit2_for_lv2 |
+                        {`DIGIT_WIDTH{digit_cnt_id3}} & int_sign_for_lv2 ;
+
 assign digit_val = (fsmc_in_inputa | fsmc_in_inputb) ? input_digit_curr : 
-                   (fsmc_in_display & (display_stage_q == 3'b1 | display_last_stage & ~(|total_disp_stage_qual))) ? output_int_4digit :
-                   (fsmc_in_display & (display_last_stage & total_disp_stage_qual > 3'b0)) ? output_int_remain :  4'ha;
+                   (fsmc_in_display & (display_stage_q == 3'b00)) ? output_int_lv0 :
+                   (fsmc_in_display & (display_stage_q == 3'b01)) ? output_int_lv1 : 
+                   (fsmc_in_display & (display_stage_q == 3'b11)) ? output_int_lv2 : 4'ha;
 
+
+
+//7-segment Ouput decoder
 assign cal_board_digit_seg = {8{digit_val == `DIGIT_WIDTH'h0}} & 8'b0000_0011 |         
                              {8{digit_val == `DIGIT_WIDTH'h1}} & 8'b1001_1111 |         
                              {8{digit_val == `DIGIT_WIDTH'h2}} & 8'b0010_0101 |         
@@ -416,6 +453,8 @@ assign cal_board_digit_seg = {8{digit_val == `DIGIT_WIDTH'h0}} & 8'b0000_0011 |
                              {8{digit_val == `DIGIT_WIDTH'ha}} & 8'b1111_1111 | // None 
                              {8{digit_val == `DIGIT_WIDTH'hb}} & 8'b1111_1101 | // "-"; 
                              {8{digit_val == `DIGIT_WIDTH'hc}} & 8'b1111_1110 ; // "."  
+
+
 //Operation decode
 assign switch_en = fsmc_next_exe;
 dflip_en #(`SWITCH_WIDTH) switch_ff (.clk(clk), .rst(rst), .en(switch_en), .d(board_cal_switchs), .q(switchs_in_exe));
@@ -443,7 +482,10 @@ assign single_cyc_op = op_qual[`OP_ADD] |
                        op_qual[`OP_SUB] |
                        op_qual[`OP_MUL] ;
                        
-assign multi_cyc_op = op_qual[`OP_DIV] ;;
+assign multi_cyc_op = op_qual[`OP_DIV];
+
+wire frac_result_op;
+assign frac_result_op = op_qual[`OP_DIV];
 
 //init counter
 wire init_cnt_rst;
@@ -483,14 +525,10 @@ dec2bin u_dec2bin_b(.clk(clk),
 );
 
 
-
-
-
-
-
 //Check input constraint
 assign invld_div  = op_qual[`OP_DIV ] & ~(|inputb); 
 assign invld_sqrt = op_qual[`OP_SQRT] & a_sign;     
+
 assign invld_op   = ~(|op_qual);     
 assign invld_input = invld_div  |
                      invld_sqrt |
@@ -571,79 +609,141 @@ divider u_divider(.clk(clk),
                   .div_done(div_done)
 );
 
+wire [31:0] frac_dec_qual;
+wire [15:0] int_dec_qual     ;
+wire [2:0] lead0_num        ;
+wire i754_overflow;
+
+frac2int u_frac2int(
+    .clk(clk),
+    .rst(rst),
+    .input_754(div_result_754),
+    .fraction_dec_qual(frac_dec_qual),
+    .int_dec_qual     (int_dec_qual ),
+    .lead0_num        (lead0_num    ),
+    .i754_overflow(i754_overflow)
+);
 
 
 //result
-assign result_qual = {`RESULT_WIDTH{op_qual[`OP_ADD]}} & add_result_q |
-                     {`RESULT_WIDTH{op_qual[`OP_SUB]}} & sub_result_q |
-                     {`RESULT_WIDTH{op_qual[`OP_MUL]}} & mul_result_q[15:0] ;
+assign result_qual = {32{op_qual[`OP_ADD]}} & {{16{add_result_q[15]}}, add_result_q} |
+                     {32{op_qual[`OP_SUB]}} & {{16{sub_result_q[15]}}, sub_result_q} |
+                     {32{op_qual[`OP_MUL]}} & mul_result_q                         |
+                     {32{op_qual[`OP_DIV]}} & int_dec_qual                         ;
 
-assign result_sign = result_qual[15];
-assign result_cvt_pre = result_qual[15] ? ~result_qual + 16'b1 : result_qual;
+assign result_sign = result_qual[31];
 
+assign result_cvt_pre = result_qual[31] ? ~result_qual + 32'b1 : result_qual;
 assign result_cvt_pre_en = fsme_next_idle;
-dflip_en #(`RESULT_WIDTH) result_ff (.clk(clk), .rst(rst), .en(result_cvt_pre_en), .d(result_cvt_pre), .q(result_cvt_pre_q));
+dflip_en #(32) result_ff (.clk(clk), .rst(rst), .en(result_cvt_pre_en), .d(result_cvt_pre), .q(result_cvt_pre_q));
 
 //overflow checking
-wire mul_overflow;
-assign mul_overflow = op_qual[`OP_MUL] & (|mul_result_q[31:16]); 
-assign overflow = mul_overflow;
-assign invld_result = invld_input | overflow;
+wire div_overflow;
+assign div_overflow = op_qual[`OP_DIV] & i754_overflow; 
 
+assign overflow = 0;//mul_overflow;
+assign invld_result = invld_input | overflow ;
 
-//Binary to decimal convert
 assign cvt_cnt_rst = exe_pre_done;
 assign cvt_cnt_en = fsmc_in_convert | cvt_cnt_rst;
-assign cvt_cnt = cvt_cnt_rst ? 4'b0000 : cvt_cnt_q + 4'b1;
-
-dflip_en #(4) cvt_cnt_ff (.clk(clk), .rst(rst), .en(cvt_cnt_en), .d(cvt_cnt), .q(cvt_cnt_q));
+assign cvt_cnt = cvt_cnt_rst ? 5'b0000 : cvt_cnt_q + 4'b1;
+dflip_en #(5) cvt_cnt_ff (.clk(clk), .rst(rst), .en(cvt_cnt_en), .d(cvt_cnt), .q(cvt_cnt_q));
 assign cvt_done = &cvt_cnt_q;
 
-assign dec_digit[15:0]  = dec_digit_q[15:0];
-assign dec_digit[19:16] = dec_digit_q[19:16] >= 4'h5 ? dec_digit_q[19:16] + 4'h3 : dec_digit_q[19:16];
-assign dec_digit[23:20] = dec_digit_q[23:20] >= 4'h5 ? dec_digit_q[23:20] + 4'h3 : dec_digit_q[23:20];
-assign dec_digit[27:24] = dec_digit_q[27:24] >= 4'h5 ? dec_digit_q[27:24] + 4'h3 : dec_digit_q[27:24];
-assign dec_digit[31:28] = dec_digit_q[31:28] >= 4'h5 ? dec_digit_q[31:28] + 4'h3 : dec_digit_q[31:28];
-assign dec_digit[35:32] = dec_digit_q[35:32] >= 4'h5 ? dec_digit_q[35:32] + 4'h3 : dec_digit_q[35:32];
-assign dec_digit_shift = ~(|cvt_cnt_q) ? {19'b0, result_cvt_pre_q, 1'b0} : dec_digit << 1'b1;
-assign dec_digit_en = fsmc_in_convert;
+wire bin2decdigit_init;
+wire bin2decdigit_en;
+assign bin2decdigit_init = ~(|cvt_cnt_q);
+assign bin2decdigit_en = fsmc_in_convert;
 
-dflip_en #(36) dec_digit_ff (.clk(clk), .rst(rst), .en(dec_digit_en), .d(dec_digit_shift), .q(dec_digit_q));
 
-assign dec_digit_1 = dec_digit_q[23:20];
-assign dec_digit_2 = dec_digit_q[27:24];
-assign dec_digit_3 = dec_digit_q[31:28];
-assign dec_digit_4 = dec_digit_q[35:32];
+wire [39:0] int_dec_digit;
+wire [39:0] frac_dec_digit;
+bin2decdigit u_bin2decdigit_for_int(
+    .clk(clk),
+    .rst(rst),
+    .bin2decdigit_init(bin2decdigit_init),
+    .bin2decdigit_en(bin2decdigit_en),
+    .input_bin(result_cvt_pre_q),
+    .output_dec(int_dec_digit)
+);
+
+bin2decdigit u_bin2decdigit_for_frac(
+    .clk(clk),
+    .rst(rst),
+    .bin2decdigit_init(bin2decdigit_init),
+    .bin2decdigit_en(bin2decdigit_en),
+    .input_bin(frac_dec_qual),
+    .output_dec(frac_dec_digit)
+);
+wire [39:0] int_digits_for_display;
+wire [39:0] frac_digits_for_display;
+wire [9:0] int_digit_idx_is0;
+wire [9:0] frac_digit_idx_is0;
+
+digit_shift u_digit_shift_for_int(
+    .clk(clk),
+    .rst(rst),
+    .input_dec(int_dec_digit),
+    .output_digits(int_digits_for_display),
+    .digit_idx_is0(int_digit_idx_is0)
+);
+
+assign int_digit_0_for_display = int_digits_for_display[3:0];
+assign int_digit_1_for_display = int_digits_for_display[7:4];
+assign int_digit_2_for_display = int_digits_for_display[11:8];
+assign int_digit_3_for_display = int_digits_for_display[15:12];
+assign int_digit_4_for_display = int_digits_for_display[19:16];
+assign int_digit_5_for_display = int_digits_for_display[23:20];
+assign int_digit_6_for_display = int_digits_for_display[27:24];
+assign int_digit_7_for_display = int_digits_for_display[31:28];
+assign int_digit_8_for_display = int_digits_for_display[35:32];
+assign int_digit_9_for_display = int_digits_for_display[39:36];
+
+digit_shift u_digit_shift_for_frac(
+    .clk(clk),
+    .rst(rst),
+    .input_dec(frac_dec_digit),
+    .output_digits(frac_digits_for_display),
+    .digit_idx_is0(frac_digit_idx_is0)
+);
+
+assign frac_digit_0_for_display = frac_digits_for_display[3:0];
+assign frac_digit_1_for_display = frac_digits_for_display[7:4];
+assign frac_digit_2_for_display = frac_digits_for_display[11:8];
+assign frac_digit_3_for_display = frac_digits_for_display[15:12];
+assign frac_digit_4_for_display = frac_digits_for_display[19:16];
+assign frac_digit_5_for_display = frac_digits_for_display[23:20];
+assign frac_digit_6_for_display = frac_digits_for_display[27:24];
+assign frac_digit_7_for_display = frac_digits_for_display[31:28];
+assign frac_digit_8_for_display = frac_digits_for_display[35:32];
+assign frac_digit_9_for_display = frac_digits_for_display[39:36];
 
 //display digit
-assign dec_digit_4_is0  = ~(|dec_digit_4);
-assign dec_digit_43_is0 = ~(|dec_digit_4) & ~(|dec_digit_3);
-assign dec_digit_42_is0 = ~(|dec_digit_4) & ~(|dec_digit_3) & ~(|dec_digit_2);
-assign dec_digit_41_is0 = ~(|dec_digit_4) & ~(|dec_digit_3) & ~(|dec_digit_2) & ~(|dec_digit_1);
+wire [15:0] int_digits_for_display_lv1;
+wire [15:0] int_digits_for_display_lv2;
 
-assign dec_digit_for_display = dec_digit_41_is0 ? {dec_digit_q[19:16], 16'b0} :
-                               dec_digit_42_is0 ? {dec_digit_q[23:16], 12'b0} :
-                               dec_digit_43_is0 ? {dec_digit_q[27:16], 8'b0}  :
-                               dec_digit_4_is0  ? {dec_digit_q[31:16], 4'b0}  : dec_digit_q[35:16];
+assign int_digits_for_display_lv1 = {int_digits_for_display[27:12]};
+assign int_digits_for_display_lv2 = {int_digits_for_display[11:0], 4'ha};
+
+assign int_sign_for_lv1   = int_digits_for_display_lv1[15:12];
+assign int_digit2_for_lv1 = int_digits_for_display_lv1[11:8];
+assign int_digit1_for_lv1 = int_digits_for_display_lv1[7:4];
+assign int_digit0_for_lv1 = int_digits_for_display_lv1[3:0];
+
+assign int_sign_for_lv2   = int_digits_for_display_lv2[15:12];
+assign int_digit2_for_lv2 = int_digits_for_display_lv2[11:8];
+assign int_digit1_for_lv2 = int_digits_for_display_lv2[7:4];
+assign int_digit0_for_lv2 = int_digits_for_display_lv2[3:0];
+
+assign int_stage_final = |int_digit_idx_is0[2:0] ? 3'b01 :
+                         |int_digit_idx_is0[6:3] & ~(|int_digit_idx_is0[2:0]) ? 3'b10 : 3'b11;
 
 
-assign dec_digit_0_for_display = (dec_digit_41_is0 | dec_digit_42_is0 | dec_digit_43_is0 | dec_digit_4_is0)? 4'ha : dec_digit_for_display[3:0];
-assign dec_digit_1_for_display = (dec_digit_41_is0 | dec_digit_42_is0 | dec_digit_43_is0) ? 4'ha : dec_digit_for_display[7:4];
-assign dec_digit_2_for_display = (dec_digit_41_is0 | dec_digit_42_is0) ? 4'ha : dec_digit_for_display[11:8];
-assign dec_digit_3_for_display = (dec_digit_41_is0) ? 4'ha :dec_digit_for_display[15:12];
-assign dec_digit_4_for_display = dec_digit_for_display[19:16];
-
-assign sign_for_remain   = dec_digit_43_is0 ? dec_digit_0_for_display : dec_digit_1_for_display;
-assign digit3_for_remain = dec_digit_43_is0 ? 4'ha : dec_digit_0_for_display;
-
-//display stage
-assign int_stage = ~(|dec_digit_4) & ~(|dec_digit_3) ? 3'b0 : 3'b1;
-assign total_disp_stage_pre = {`DISP_STG_WIDTH{int_result_op}} & int_stage;
-
-assign total_disp_stage_qual = (invld_result) ? 3'b000 : total_disp_stage_pre;
+assign total_disp_stage_pre = {`DISP_STG_WIDTH{int_result_op}} & int_stage_final;
 assign display_stage_en = fsmc_in_display & button_mid & ~display_last_stage | fsmc_in_setup;
-assign display_stage = fsmc_in_setup ? total_disp_stage_qual : display_stage_q - 1'b1;
-assign display_last_stage = ~(|display_stage_q);
+assign display_stage = fsmc_in_setup ? 3'b0 : display_stage_q + 1'b1;
+assign display_last_stage = (display_stage == int_stage_final) | invld_result;
+
 dflip_en #(`DISP_STG_WIDTH) display_stage_ff (.clk(clk), .rst(rst), .en(display_stage_en), .d(display_stage), .q(display_stage_q));
 assign cal_board_display_stage = display_stage_q + 3'b1;
 

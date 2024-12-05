@@ -281,13 +281,16 @@ assign norm_quotient_bias = ~(|shift_quotient[31:0 ])  ? quotient_exp_q - 8'd32 
 wire [31:0] div_result_754_pre;
 assign div_result_754_pre[31] = (inputa_sign_754 ^ inputb_sign_754);
 assign div_result_754_pre[30:23] = norm_quotient_bias;
-assign div_result_754_pre[22:0] = norm_quotient[30:8];
+assign div_result_754_pre[22:0] = norm_quotient[7] ? norm_quotient[30:8] + 23'b1 : {norm_quotient[30:9], 1'b0};
+
+wire [31:0] div_result_754_qual;
+assign div_result_754_qual = ~(|inputa_754) ? 32'b0: div_result_754_pre;
 
 wire div_result_en;
-assign done_en = fsmdiv_in_done;
-
-dflip_en #(32) div_result_ff (.clk(clk), .rst(rst), .en(done_en), .d(div_result_754_pre), .q(div_result_754)); 
-dflip #(1) div_done_ff (.clk(clk), .rst(rst), .d(fsmdiv_in_done), .q(div_done)); 
+wire div_pre_done;
+assign div_pre_done = fsmdiv_in_done;
+dflip_en #(32) div_result_ff (.clk(clk), .rst(rst), .en(div_pre_done), .d(div_result_754_qual), .q(div_result_754)); 
+dflip #(1) div_done_ff (.clk(clk), .rst(rst), .d(div_pre_done), .q(div_done)); 
 
 
 endmodule;

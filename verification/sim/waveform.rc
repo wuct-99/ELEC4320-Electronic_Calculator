@@ -2,7 +2,7 @@ Magic 271485
 Revision Verdi_V-2023.12
 
 ; Window Layout <x> <y> <width> <height> <signalwidth> <valuewidth>
-viewPort 0 25 1920 452 285 65
+viewPort 0 25 1920 522 377 65
 
 ; File list:
 ; openDirFile [-d delimiter] [-s time_offset] [-rf auto_bus_rule_file] path_name file_name
@@ -16,16 +16,16 @@ signalSpacing 5
 
 ; windowTimeUnit is used for zoom, cursor & marker
 ; waveform viewport range
-zoom 0.000000 101000.000000
-cursor 75250.000000
+zoom 0.000000 10100000.000000
+cursor 3281850.000000
 marker -10140.000000
 
 ; user define markers
 ; userMarker time_pos marker_name color linestyle
 ; visible top row signal index
-top 21
+top 75
 ; marker line index
-markerPos 47
+markerPos 107
 
 ; event list
 ; addEvent event_name event_expression
@@ -77,7 +77,7 @@ addSignal -h 15 -holdScope button_down
 addSignal -h 15 -holdScope button_left
 addSignal -h 15 -holdScope button_right
 addSignal -h 15 -holdScope button_mid
-addGroup "OUTPUT"
+addGroup "OUTPUT" -e FALSE
 addSignal -h 15 /harness/u_cal_top/cal_board_exe_done
 addSignal -h 15 -UNSIGNED -HEX -holdScope cal_board_display_stage[2:0]
 addGroup "FSMC"
@@ -92,9 +92,11 @@ addSignal -h 15 -holdScope fsmin_idle_to_digit0
 addSignal -h 15 -holdScope fsmc_next_inputb
 aliasname FSMIN
 addSignal -h 15 -UNSIGNED -HEX -holdScope fsmin_next_state[4:0]
-addGroup "FSME"
+addGroup "FSME" -e FALSE
 aliasname FSME
 addSignal -h 15 -UNSIGNED -HEX /harness/u_cal_top/fsme_curr_state[4:0]
+addSignal -h 15 -holdScope fsme_init_to_multi
+addSignal -h 15 -holdScope fsme_init_to_done
 addSignal -h 15 -UNSIGNED -HEX -holdScope init_cnt_q[1:0]
 aliasname FSME
 addSignal -h 15 -UNSIGNED -HEX -holdScope fsme_next_state[4:0]
@@ -116,10 +118,12 @@ addGroup "Ddecimal" -e FALSE
 addSignal -h 15 /harness/u_cal_top/a_sign
 addSignal -h 15 -UNSIGNED -UDEC -holdScope unsign_inputa[15:0]
 addSignal -h 15 -2COMP -UDEC -holdScope sign_inputa[15:0]
+addSignal -h 15 -UNSIGNED -IEEE754 -holdScope inputa_754[31:0]
 addSignal -h 15 -holdScope b_sign
 addSignal -h 15 -UNSIGNED -UDEC -holdScope unsign_inputb[15:0]
 addSignal -h 15 -2COMP -UDEC -holdScope sign_inputb[15:0]
-addGroup "7segment"
+addSignal -h 15 -UNSIGNED -IEEE754 -holdScope inputb_754[31:0]
+addGroup "7segment" -e FALSE
 addSignal -h 15 /harness/u_cal_top/clk_display
 addSignal -h 15 -UNSIGNED -HEX -holdScope digit_cnt_q[1:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope cal_board_digit_ctrl[3:0]
@@ -130,9 +134,8 @@ addSignal -h 15 -2COMP -UDEC -holdScope inputb[15:0]
 addSignal -h 15 -2COMP -UDEC -holdScope add_result[15:0]
 addSignal -h 15 -2COMP -UDEC -holdScope sub_result[15:0]
 addSignal -h 15 -2COMP -UDEC -holdScope mul_result[15:0]
-addSignal -h 15 -2COMP -UDEC -holdScope div_result[15:0]
 addSignal -h 15 -UNSIGNED -UDEC -holdScope result_cvt_pre[15:0]
-addGroup "display stage" -e FALSE
+addGroup "display stage"
 addSignal -h 15 /harness/u_cal_top/display_stage_en
 addSignal -h 15 -UNSIGNED -HEX -holdScope display_stage[2:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope display_stage_q[2:0]
@@ -141,26 +144,58 @@ addGroup "convert cnt" -e FALSE
 addSignal -h 15 -UNSIGNED -HEX /harness/u_cal_top/cvt_cnt[3:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope cvt_cnt_q[3:0]
 addSignal -h 15 -holdScope cvt_done
-addGroup "decimal output" -e FALSE
-addSignal -h 15 -UNSIGNED -HEX /harness/u_cal_top/dec_digit_4[3:0]
-addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_3[3:0]
-addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_2[3:0]
-addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_1[3:0]
-addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_0[3:0]
-addGroup "Output Display" -e FALSE
-addSignal -h 15 /harness/u_cal_top/invld_result
-addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_4_for_display[3:0]
-addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_3_for_display[3:0]
-addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_2_for_display[3:0]
-addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_1_for_display[3:0]
-addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_0_for_display[3:0]
-addSignal -h 15 -UNSIGNED -HEX -holdScope dec_digit_for_display[19:0]
-addGroup "G14" -e FALSE
-addSignal -h 15 /harness/u_cal_top/dec_digit_41_is0
-addSignal -h 15 -holdScope dec_digit_42_is0
-addSignal -h 15 -holdScope dec_digit_43_is0
-addSignal -h 15 -holdScope dec_digit_4_is0
-addGroup "G16"
+addGroup "Divider"
+addSignal -h 15 -UNSIGNED -HEX /harness/u_cal_top/u_divider/fsmdiv_curr_state[3:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope fsmdiv_next_state[3:0]
+addSignal -h 15 -UNSIGNED -IEEE754 -holdScope inputa_754[31:0]
+addSignal -h 15 -UNSIGNED -IEEE754 -holdScope inputb_754[31:0]
+addSignal -h 15 -UNSIGNED -IEEE754 -holdScope div_result_754[31:0]
+addSignal -h 15 -holdScope div_done
+addSignal -h 15 -holdScope div_pre_done
+addSignal -h 15 -holdScope fsmdiv_in_done
+addGroup "dec2bin init" -e FALSE
+addSignal -h 15 -UNSIGNED -HEX /harness/u_cal_top/init_cnt_d[1:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope init_cnt_q[1:0]
+addSignal -h 15 -holdScope init_cnt_en
+addSignal -h 15 -holdScope fsme_in_init
+addSignal -h 15 -holdScope fsme_in_init
+addSignal -h 15 -holdScope init_cnt_rst
+addGroup "i7542dec" -e FALSE
+addSignal -h 15 -UNSIGNED -IEEE754 /harness/u_cal_top/div_result_754[31:0]
+addSignal -h 15 -UNSIGNED -UDEC -holdScope int_dec_qual[15:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope lead0_num[2:0]
+addSignal -h 15 -holdScope fsme_next_idle
+addGroup "Convert Counter" -e FALSE
+addSignal -h 15 -UNSIGNED -HEX /harness/u_cal_top/cvt_cnt[4:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope cvt_cnt_q[4:0]
+addSignal -h 15 -UNSIGNED -UDEC -holdScope result_cvt_pre_q[31:0]
+addSignal -h 15 -holdScope cvt_done
+addGroup "Integer Digit display"
+addSignal -h 15 -UNSIGNED -HEX /harness/u_cal_top/int_dec_digit[39:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope int_digit_0_for_display[3:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope int_digit_1_for_display[3:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope int_digit_2_for_display[3:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope int_digit_3_for_display[3:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope int_digit_4_for_display[3:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope int_digit_5_for_display[3:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope int_digit_6_for_display[3:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope int_digit_7_for_display[3:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope int_digit_8_for_display[3:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope int_digit_9_for_display[3:0]
+addGroup "Fraction Digit display" -e FALSE
+addSignal -h 15 -UNSIGNED -UDEC /harness/u_cal_top/frac_dec_qual[31:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope frac_dec_digit[39:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope frac_digit_0_for_display[3:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope frac_digit_1_for_display[3:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope frac_digit_2_for_display[3:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope frac_digit_3_for_display[3:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope frac_digit_4_for_display[3:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope frac_digit_5_for_display[3:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope frac_digit_6_for_display[3:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope frac_digit_7_for_display[3:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope frac_digit_8_for_display[3:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope frac_digit_9_for_display[3:0]
+addGroup "G19"
 
 ; getSignalForm Scope Hierarchy Status
 ; active file of getSignalForm
