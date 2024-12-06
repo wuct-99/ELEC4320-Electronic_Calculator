@@ -22,7 +22,7 @@ input left_btn;
 input right_btn;
 input mid_btn;
 //input usr_in_vld;
-input [3:0] mode;
+input [10:0] mode;
 
 //decode and module selection (total should be 11 operations, 4 switches --> 4 bit control code)
 wire    add_vld;
@@ -34,7 +34,10 @@ wire    sin_vld;
 wire    cos_vld;
 wire    tan_vld;
 wire    log_vld;
+wire    pow_vld;
 wire		  exp_vld;
+
+assign {add_vld, sub_vld, mult_vld, div_vld, sqrt_vld, sin_vld, cos_vld, tan_vld, log_vld, pow_vld, exp_vld} = mode;
 
 //debouncing circuit (3ff) for all input involving switches and buttons 
 wire up_btn_d1;
@@ -205,8 +208,7 @@ dffr #(1) digit_sel_fsm (.clk(clk), .rst_n(rst_n), .d(nxt_digit), .q(cur_digit))
 //when left or right button pressed then save current digita
 //in_vld until rslt_vld --> in_operation state, 
 //input values & input value checking 
-wire [15:0] in_num_a;
-wire [15:0] in_num_b;
+
 
 wire [2:0][3:0] in_digits_a;
 wire [2:0][3:0] in_digits_b;
@@ -260,16 +262,29 @@ wire in_num_b_wr_en;
 
 wire [15:0] in_num_a_wr_data;//convert the 3 digits into 16 bit sign extended binary 
 wire [15:0] in_num_b_wr_data; 
+
+wire [15:0] in_num_a_bin;
+wire [15:0] in_num_b_bin;
+
 assign in_num_a_wr_en = (cur_pstate == 2'b00) & mid_btn_final;
 assign in_num_b_wr_en = (cur_pstate == 2'b01) & mid_btn_final;
 
-//convert the 4 digits into 16 bit sign extended binary  
+//convert the 4 digits into 16 bit sign extended binary
+bcd_convert_bin in_num_a_convert (.in_digits(in_digits_a),.bin_output(in_num_a_wr_data));  
+bcd_convert_bin in_num_b_convert (.in_digits(in_digits_b),.bin_output(in_num_b_wr_data));  
 
-
+//dffre #(16) in_num_a_reg (.clk(clk), .rst_n(rst_n), .en(in_num_a_wr_en), .d(in_num_a_wr_data), .q(in_num_a_bin));
+//dffre #(16) in_num_b_reg (.clk(clk), .rst_n(rst_n), .en(in_num_b_wr_en), .d(in_num_b_wr_data), .q(in_num_b_bin)); //now assume everything done in one clockfirst 
+//
+//input qualification
+always @(*) begin 
+   if
 //declare and establish connections to all modules (add/minus/mult/div/sin/cos ...)
+/*connect to all other modules 
 
 
-//output processing 
+
+//output processing * need a clock divider to refresh the display at ~60hz (check elec 3111 labs)
 //prob need an output moduel 
 //need binary --> decimal --> segment display 
 //floating point or no floaing point, how many significant figures 
