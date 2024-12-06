@@ -477,9 +477,13 @@ assign init_cnt_en = fsmc_in_exe & (fsme_in_init | fsme_in_done) | fsmc_in_setup
 dflip_en #(2) init_cnt_ff (.clk(clk), .rst(rst), .en(init_cnt_en), .d(init_cnt_d), .q(init_cnt_q));
 assign init_done = &init_cnt_q;
 
+
+wire [1:0] dec2bin_cnt;
+assign dec2bin_cnt = {2{fsme_in_init}} & init_cnt_q;
+
 dec2bin u_dec2bin_a(.clk(clk),
                     .rst(rst),
-                    .init_cnt_q(init_cnt_q),
+                    .init_cnt_q(dec2bin_cnt),
                     .digit0(a_digit0),
                     .digit1(a_digit1),
                     .digit2(a_digit2),
@@ -592,13 +596,15 @@ divider u_divider(.clk(clk),
 wire [31:0] frac_dec_qual;
 wire [31:0] int_dec_qual     ;
 wire [2:0] lead0_num        ;
-wire [2:0] lead0_num_q      ;
 wire i754_overflow;
+
+wire [1:0] frac2int_cnt;
+assign frac2int_cnt = {2{fsme_in_done}} & init_cnt_q;
 
 frac2int u_frac2int(
     .clk(clk),
     .rst(rst),
-    .cvt_cnt_q(init_cnt_q),
+    .cvt_cnt_q(frac2int_cnt),
     .input_754(div_result_754),
     .fraction_dec_qual(frac_dec_qual),
     .int_dec_qual     (int_dec_qual ),
@@ -618,8 +624,6 @@ assign result_sign = result_qual[31]; //FIXME for fraction
 assign int_result_cvt_pre = result_qual[31] ? ~result_qual + 32'b1 : result_qual;
 
 dflip_en #(32) int_result_ff  (.clk(clk), .rst(rst), .en(exe_done), .d(int_result_cvt_pre), .q(int_result_cvt_pre_q));
-dflip_en #(3)  lead0_num_ff   (.clk(clk), .rst(rst), .en(exe_done), .d(lead0_num         ), .q(lead0_num_q));
-
 
 //overflow checking
 wire div_overflow;
@@ -664,10 +668,10 @@ wire setup_lv0_en;
 wire setup_lv1_en;
 wire setup_lv2_en;
 wire setup_lv3_en;
-assign setup_lv0_en = init_cnt_q == 2'b00;
-assign setup_lv1_en = init_cnt_q == 2'b01;
-assign setup_lv2_en = init_cnt_q == 2'b10;
-assign setup_lv3_en = init_cnt_q == 2'b11;
+assign setup_lv0_en = fsmc_in_setup & init_cnt_q == 2'b00;
+assign setup_lv1_en = fsmc_in_setup & init_cnt_q == 2'b01;
+assign setup_lv2_en = fsmc_in_setup & init_cnt_q == 2'b10;
+assign setup_lv3_en = fsmc_in_setup & init_cnt_q == 2'b11;
 
 wire [39:0] int_digits_for_display;
 wire [39:0] frac_digits_for_display;
@@ -760,7 +764,7 @@ wire [39:0] mask_for_frac_part;
 wire [39:0] int_frac_digits_for_display;
 wire [39:0] int_frac_digits_for_display_lv3;
 
-assign frac_digits_for_display_shift_lead0 = frac_digits_for_display_adj_lv2 >> {lead0_num_q, 2'b00};
+assign frac_digits_for_display_shift_lead0 = frac_digits_for_display_adj_lv2 >> {lead0_num, 2'b00};
 
 assign frac_digits_for_display_align_non0int = ~(|int_digits_idx_is0_non0int_adj_lv2[9:0]) ? frac_digits_for_display_shift_lead0 :
                                                ~(|int_digits_idx_is0_non0int_adj_lv2[9:1]) ? frac_digits_for_display_shift_lead0 >> 36 :
