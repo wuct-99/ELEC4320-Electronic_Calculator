@@ -241,13 +241,11 @@ assign exp_fraction_dec_lv0_0  = exp_fraction_2n1 + exp_fraction_2n2;
 assign exp_fraction_dec_lv0_1  = exp_fraction_2n3 + exp_fraction_2n4;
 assign exp_fraction_dec_lv0_2  = exp_fraction_2n5 + exp_fraction_2n6;
 assign exp_fraction_dec_lv0_3  = exp_fraction_2n7 + exp_fraction_2n8;
-assign exp_fraction_dec_lv0_4  = exp_fraction_2n9 + exp_fraction_2n10;
-assign exp_fraction_dec_lv0_5  = exp_fraction_2n11 + exp_fraction_2n12;
-assign exp_fraction_dec_lv0_6  = exp_fraction_2n13 + exp_fraction_2n14;
-assign exp_fraction_dec_lv0_7  = exp_fraction_2n15 + exp_fraction_2n16;
-assign exp_fraction_dec_lv0_8  = exp_fraction_2n17 + exp_fraction_2n18;
-assign exp_fraction_dec_lv0_9  = exp_fraction_2n19 + exp_fraction_2n20;
-assign exp_fraction_dec_lv0_10 = exp_fraction_2n21 + exp_fraction_2n22 + exp_fraction_2n23;
+assign exp_fraction_dec_lv0_4  = exp_fraction_2n9 + exp_fraction_2n10 + exp_fraction_2n11 ;
+assign exp_fraction_dec_lv0_5  = exp_fraction_2n12 + exp_fraction_2n13 + exp_fraction_2n14;
+assign exp_fraction_dec_lv0_6  = exp_fraction_2n15 + exp_fraction_2n16 + exp_fraction_2n17;
+assign exp_fraction_dec_lv0_7  = exp_fraction_2n18 + exp_fraction_2n19 + exp_fraction_2n20;
+assign exp_fraction_dec_lv0_8  = exp_fraction_2n21 + exp_fraction_2n22 + exp_fraction_2n23;
 
 dflip_en #(32) exp_fraction_dec_lv0_0_ff  (.clk(clk), .rst(rst), .en(cvt_lv0_en), .d(exp_fraction_dec_lv0_0 ), .q(exp_fraction_dec_lv0_0_q));
 dflip_en #(32) exp_fraction_dec_lv0_1_ff  (.clk(clk), .rst(rst), .en(cvt_lv0_en), .d(exp_fraction_dec_lv0_1 ), .q(exp_fraction_dec_lv0_1_q));
@@ -258,32 +256,25 @@ dflip_en #(32) exp_fraction_dec_lv0_5_ff  (.clk(clk), .rst(rst), .en(cvt_lv0_en)
 dflip_en #(32) exp_fraction_dec_lv0_6_ff  (.clk(clk), .rst(rst), .en(cvt_lv0_en), .d(exp_fraction_dec_lv0_6 ), .q(exp_fraction_dec_lv0_6_q));
 dflip_en #(32) exp_fraction_dec_lv0_7_ff  (.clk(clk), .rst(rst), .en(cvt_lv0_en), .d(exp_fraction_dec_lv0_7 ), .q(exp_fraction_dec_lv0_7_q));
 dflip_en #(32) exp_fraction_dec_lv0_8_ff  (.clk(clk), .rst(rst), .en(cvt_lv0_en), .d(exp_fraction_dec_lv0_8 ), .q(exp_fraction_dec_lv0_8_q));
-dflip_en #(32) exp_fraction_dec_lv0_9_ff  (.clk(clk), .rst(rst), .en(cvt_lv0_en), .d(exp_fraction_dec_lv0_9 ), .q(exp_fraction_dec_lv0_9_q));
-dflip_en #(32) exp_fraction_dec_lv0_10_ff (.clk(clk), .rst(rst), .en(cvt_lv0_en), .d(exp_fraction_dec_lv0_10), .q(exp_fraction_dec_lv0_10_q));
 
 assign exp_fraction_dec_lv1_0  = exp_fraction_dec_lv0_0_q + exp_fraction_dec_lv0_1_q;
 assign exp_fraction_dec_lv1_1  = exp_fraction_dec_lv0_2_q + exp_fraction_dec_lv0_3_q;
 assign exp_fraction_dec_lv1_2  = exp_fraction_dec_lv0_4_q + exp_fraction_dec_lv0_5_q;
-assign exp_fraction_dec_lv1_3  = exp_fraction_dec_lv0_6_q + exp_fraction_dec_lv0_7_q;
-assign exp_fraction_dec_lv1_4  = exp_fraction_dec_lv0_8_q + exp_fraction_dec_lv0_8_q;
-assign exp_fraction_dec_lv1_5  = exp_fraction_dec_lv0_9_q + exp_fraction_dec_lv0_10_q;
+assign exp_fraction_dec_lv1_3  = exp_fraction_dec_lv0_6_q + exp_fraction_dec_lv0_7_q + exp_fraction_dec_lv0_8_q;
 
 dflip_en #(32) exp_fraction_dec_lv1_0_ff  (.clk(clk), .rst(rst), .en(cvt_lv1_en), .d(exp_fraction_dec_lv1_0 ), .q(exp_fraction_dec_lv1_0_q));
 dflip_en #(32) exp_fraction_dec_lv1_1_ff  (.clk(clk), .rst(rst), .en(cvt_lv1_en), .d(exp_fraction_dec_lv1_1 ), .q(exp_fraction_dec_lv1_1_q));
 dflip_en #(32) exp_fraction_dec_lv1_2_ff  (.clk(clk), .rst(rst), .en(cvt_lv1_en), .d(exp_fraction_dec_lv1_2 ), .q(exp_fraction_dec_lv1_2_q));
 dflip_en #(32) exp_fraction_dec_lv1_3_ff  (.clk(clk), .rst(rst), .en(cvt_lv1_en), .d(exp_fraction_dec_lv1_3 ), .q(exp_fraction_dec_lv1_3_q));
-dflip_en #(32) exp_fraction_dec_lv1_4_ff  (.clk(clk), .rst(rst), .en(cvt_lv1_en), .d(exp_fraction_dec_lv1_4 ), .q(exp_fraction_dec_lv1_4_q));
-dflip_en #(32) exp_fraction_dec_lv1_5_ff  (.clk(clk), .rst(rst), .en(cvt_lv1_en), .d(exp_fraction_dec_lv1_5 ), .q(exp_fraction_dec_lv1_5_q));
 
 assign exp_fraction_dec_lv2_0  = exp_fraction_dec_lv1_0_q + exp_fraction_dec_lv1_1_q;
 assign exp_fraction_dec_lv2_1  = exp_fraction_dec_lv1_2_q + exp_fraction_dec_lv1_3_q;
-assign exp_fraction_dec_lv2_2  = exp_fraction_dec_lv1_4_q + exp_fraction_dec_lv1_5_q;
 
 dflip_en #(32) exp_fraction_dec_lv2_0_ff  (.clk(clk), .rst(rst), .en(cvt_lv2_en), .d(exp_fraction_dec_lv2_0 ), .q(exp_fraction_dec_lv2_0_q));
 dflip_en #(32) exp_fraction_dec_lv2_1_ff  (.clk(clk), .rst(rst), .en(cvt_lv2_en), .d(exp_fraction_dec_lv2_1 ), .q(exp_fraction_dec_lv2_1_q));
 dflip_en #(32) exp_fraction_dec_lv2_2_ff  (.clk(clk), .rst(rst), .en(cvt_lv2_en), .d(exp_fraction_dec_lv2_2 ), .q(exp_fraction_dec_lv2_2_q));
 
-assign exp_fraction_dec_lv3  = exp_fraction_dec_lv2_0_q + exp_fraction_dec_lv2_1_q + exp_fraction_dec_lv2_2_q;
+assign exp_fraction_dec_lv3  = exp_fraction_dec_lv2_0_q + exp_fraction_dec_lv2_1_q;
 dflip_en #(32) exp_fraction_dec_lv3_ff  (.clk(clk), .rst(rst), .en(cvt_lv3_en), .d(exp_fraction_dec_lv3), .q(exp_fraction_dec));
 
 wire input_is0;
