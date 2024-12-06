@@ -89,6 +89,7 @@ wire fsme_in_done;
 wire fsme_state_upd;
 wire fsme_next_idle;
 wire fsme_next_init;
+wire fsme_next_done;
 //FSMC
 wire [`FSMC_STATE_WIDTH - 1:0] fsmc_curr_state;
 wire [`FSMC_STATE_WIDTH - 1:0] fsmc_next_state;
@@ -480,10 +481,17 @@ wire [1:0] init_cnt_d;
 wire [1:0] init_cnt_q;
 wire init_cnt_en;
 
-assign init_cnt_rst = fsme_next_init; 
-assign init_cnt_d = init_cnt_rst ? 2'b00 : init_cnt_q + 2'b01;
-assign init_cnt_en = fsme_in_init | init_cnt_rst;
+//assign init_cnt_rst = fsme_next_init; 
+//assign init_cnt_d = init_cnt_rst ? 2'b00 : init_cnt_q + 2'b01;
+//assign init_cnt_en = fsme_in_init | init_cnt_rst;
+//dflip_en #(2) init_cnt_ff (.clk(clk), .rst(rst), .en(init_cnt_en), .d(init_cnt_d), .q(init_cnt_q));
+//assign init_cnt_rst = fsme_next_init ; 
+assign init_cnt_d = init_cnt_q + 2'b01;
+assign init_cnt_en = fsme_in_init | fsme_in_done;
 dflip_en #(2) init_cnt_ff (.clk(clk), .rst(rst), .en(init_cnt_en), .d(init_cnt_d), .q(init_cnt_q));
+
+wire init_done;
+assign init_done = &init_cnt_q;
 
 dec2bin u_dec2bin_a(.clk(clk),
                     .rst(rst),
@@ -531,12 +539,12 @@ assign fsme_in_done   = fsme_curr_state[4];
 wire div_done;
 
 assign fsme_idle_to_init   = fsme_in_idle   & fsmc_in_exe;
-assign fsme_init_to_single = fsme_in_init   & single_cyc_op & (&init_cnt_d);
-assign fsme_init_to_multi  = fsme_in_init   & multi_cyc_op  & (&init_cnt_d);
-assign fsme_init_to_done   = fsme_in_init   & invld_input   & (&init_cnt_d);
+assign fsme_init_to_single = fsme_in_init   & ~invld_input & single_cyc_op & init_done;
+assign fsme_init_to_multi  = fsme_in_init   & ~invld_input & multi_cyc_op  & init_done;
+assign fsme_init_to_done   = fsme_in_init   & invld_input & init_done;
 assign fsme_single_to_done = fsme_in_single ;
 assign fsme_multi_to_done  = fsme_in_multi  & div_done; //FIXME
-assign fsme_done_to_idle   = fsme_in_done   ;
+assign fsme_done_to_idle   = fsme_in_done   & (int_result_op | init_done);
 
 assign fsme_next_state = {`FSME_STATE_WIDTH{fsme_idle_to_init  }} & `FSME_INIT   |
                          {`FSME_STATE_WIDTH{fsme_init_to_single}} & `FSME_SINGLE |
@@ -556,6 +564,7 @@ assign fsme_state_upd = fsme_idle_to_init   |
 
 assign fsme_next_idle = fsme_next_state[0];
 assign fsme_next_init = fsme_next_state[1];
+assign fsme_next_done = fsme_next_state[4];
 
 dflip_en #(`FSME_STATE_WIDTH, `FSME_STATE_WIDTH'h1) fsme_state_ff (.clk(clk), 
                                                                    .rst(rst), 
@@ -604,6 +613,7 @@ wire i754_overflow;
 frac2int u_frac2int(
     .clk(clk),
     .rst(rst),
+    .cvt_cnt_q(init_cnt_q),
     .input_754(div_result_754),
     .fraction_dec_qual(frac_dec_qual),
     .int_dec_qual     (int_dec_qual ),
@@ -627,10 +637,10 @@ dflip_en #(32) result_ff (.clk(clk), .rst(rst), .en(result_cvt_pre_en), .d(resul
 //overflow checking
 wire div_overflow;
 assign div_overflow = op_qual[`OP_DIV] & i754_overflow; 
-
 assign overflow = 0;//mul_overflow;
 assign invld_result = invld_input | overflow | div_overflow;
 
+//Convert Stage
 assign cvt_cnt_rst = exe_pre_done;
 assign cvt_cnt_en = fsmc_in_convert | cvt_cnt_rst;
 assign cvt_cnt = cvt_cnt_rst ? 5'b0000 : cvt_cnt_q + 4'b1;
@@ -641,7 +651,6 @@ wire bin2decdigit_init;
 wire bin2decdigit_en;
 assign bin2decdigit_init = ~(|cvt_cnt_q);
 assign bin2decdigit_en = fsmc_in_convert;
-
 
 wire [39:0] int_dec_digit;
 wire [39:0] frac_dec_digit;
@@ -662,6 +671,8 @@ bin2decdigit u_bin2decdigit_for_frac(
     .input_bin(frac_dec_qual),
     .output_dec(frac_dec_digit)
 );
+
+//Set up Stage
 wire [39:0] int_digits_for_display;
 wire [39:0] frac_digits_for_display;
 wire [9:0] int_digits_idx_is0;
@@ -721,7 +732,8 @@ wire [39:0] frac_digits_for_display_adj;
 assign frac_digits_for_display_adj = {frac_digits_for_display[39:20], {5{4'ha}}};
 
 wire [39:0] frac_digits_for_display_shift_lead0;
-assign frac_digits_for_display_shift_lead0 = frac_part_is0 ? {40'h00_0aaa_aaaa} : frac_digits_for_display_adj >> {lead0_num, 2'b00};
+//assign frac_digits_for_display_shift_lead0 = frac_part_is0 ? {40'h00_0aaa_aaaa} : frac_digits_for_display_adj >> {lead0_num, 2'b00};
+assign frac_digits_for_display_shift_lead0 = frac_digits_for_display_adj >> {lead0_num, 2'b00};
 
 wire [39:0] frac_digits_for_display_align_non0int;
 assign frac_digits_for_display_align_non0int = ~(|int_digits_idx_is0_non0int_adj[9:0]) ? frac_digits_for_display_shift_lead0 :
@@ -770,7 +782,7 @@ assign int_frac_digits_isa[2] = int_frac_digits_for_display[11:8 ] == 4'ha;
 
 //Display Digit Selection
 wire [39:0] output_digits_for_display;
-assign output_digits_for_display = int_result_op ? int_digits_for_display : int_frac_digits_for_display;
+assign output_digits_for_display = int_result_op | frac_part_is0 ? int_digits_for_display : int_frac_digits_for_display;
 
 assign output_digit7_for_display = output_digits_for_display[31:28];
 assign output_digit8_for_display = output_digits_for_display[35:32];
