@@ -30,9 +30,6 @@ wire init_lv2_en  ;
 wire init_lv3_en  ;
 wire init_lv4_en  ;
 
-wire [`RESULT_WIDTH-1:0] unsign_input; 
-wire signed [`RESULT_WIDTH-1:0] sign_input; 
-
 wire [`RESULT_WIDTH-1:0] digit0_sl0;
 wire [`RESULT_WIDTH-1:0] digit1_sl3;
 wire [`RESULT_WIDTH-1:0] digit1_sl1;
@@ -47,7 +44,6 @@ wire [`RESULT_WIDTH-1:0] lv1_0_q;
 wire [`RESULT_WIDTH-1:0] lv1_1_q;
 wire [`RESULT_WIDTH-1:0] lv1_2_q;
 wire [`RESULT_WIDTH-1:0] lv2;
-wire [`RESULT_WIDTH-1:0] lv2_q;
 wire [`RESULT_WIDTH-1:0] lv3;
 wire [31:0] lv4;
 

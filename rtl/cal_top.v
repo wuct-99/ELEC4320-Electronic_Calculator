@@ -198,7 +198,6 @@ wire [3:0] output_digit0_for_lv2;
 
 //display stage
 wire [`DISP_STG_WIDTH-1:0] total_disp_stage_pre;
-wire [`DISP_STG_WIDTH-1:0] total_disp_stage_qual;
 wire [2:0] int_stage_final; 
 wire [2:0] frac_stage_final; 
 
@@ -215,7 +214,6 @@ wire clk_display_en;
 wire clk_display_state_d;
 wire clk_display_state_q;
 wire clk_display;
-
 
 //------------------------------------------------
 
@@ -387,7 +385,7 @@ assign digit_cnt_en = fsmc_in_inputa | fsmc_in_inputb | fsmc_in_display & ~invld
 assign digit_cnt_d = digit_cnt_rst ? 2'b00 : digit_cnt_q + 2'b01;
 
 //digit 0 > digit 1 > digit2 > sign
-dflip_en #(2) digit_cnt_ff (.clk(clk), .rst(rst), .en(digit_cnt_en), .d(digit_cnt_d), .q(digit_cnt_q));
+dflip_en #(2) digit_cnt_ff (.clk(clk_display), .rst(rst), .en(digit_cnt_en), .d(digit_cnt_d), .q(digit_cnt_q));
 
 wire digit_cnt_id0;
 wire digit_cnt_id1;
@@ -757,7 +755,8 @@ assign mask_for_int_part = ~mask_for_frac_part;
 wire [39:0] int_frac_digits_for_display;
 assign int_frac_digits_for_display = int_digits_add_dots & mask_for_int_part | frac_digits_for_display_align_int & mask_for_frac_part;
 
-wire [8:0] int_frac_digits_isa;
+//wire [8:0] int_frac_digits_isa;
+wire [8:2] int_frac_digits_isa;
 
 assign int_frac_digits_isa[8] = int_frac_digits_for_display[35:32] == 4'ha;
 assign int_frac_digits_isa[7] = int_frac_digits_for_display[31:28] == 4'ha;
@@ -766,8 +765,8 @@ assign int_frac_digits_isa[5] = int_frac_digits_for_display[23:20] == 4'ha;
 assign int_frac_digits_isa[4] = int_frac_digits_for_display[19:16] == 4'ha;
 assign int_frac_digits_isa[3] = int_frac_digits_for_display[15:12] == 4'ha;
 assign int_frac_digits_isa[2] = int_frac_digits_for_display[11:8 ] == 4'ha;
-assign int_frac_digits_isa[1] = int_frac_digits_for_display[7:4  ] == 4'ha;
-assign int_frac_digits_isa[0] = int_frac_digits_for_display[3:0  ] == 4'ha;
+//assign int_frac_digits_isa[1] = int_frac_digits_for_display[7:4  ] == 4'ha;
+//assign int_frac_digits_isa[0] = int_frac_digits_for_display[3:0  ] == 4'ha;
 
 //Display Digit Selection
 wire [39:0] output_digits_for_display;
