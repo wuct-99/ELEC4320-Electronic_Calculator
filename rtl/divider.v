@@ -33,6 +33,7 @@ wire fsmdiv_state_upd;
 wire exe_done;
 wire exe_done_d1;
 wire exe_done_d2;
+wire exe_done_d3;
 
 //FSMDIV
 assign fsmdiv_in_idle  = fsmdiv_curr_state[0];
@@ -43,7 +44,7 @@ assign fsmdiv_in_done  = fsmdiv_curr_state[3];
 assign fsmdiv_idle_to_init = fsmdiv_in_idle & div_start;
 assign fsmdiv_init_to_exe  = fsmdiv_in_init ;
 assign fsmdiv_exe_to_done  = fsmdiv_in_exe  & exe_done;
-assign fsmdiv_done_to_idle = fsmdiv_in_done & exe_done_d2;
+assign fsmdiv_done_to_idle = fsmdiv_in_done & exe_done_d3;
 
 assign fsmdiv_next_state = {`FSMDIV_STATE_WIDTH{fsmdiv_idle_to_init}} & `FSMDIV_INIT |
                            {`FSMDIV_STATE_WIDTH{fsmdiv_init_to_exe }} & `FSMDIV_EXE  |
@@ -163,6 +164,7 @@ dflip_en #(32) quotient_ff (.clk(clk), .rst(rst), .en(exe_en), .d(quotient), .q(
 
 dflip #(1) exe_done_d1_ff (.clk(clk), .rst(rst), .d(exe_done), .q(exe_done_d1)); 
 dflip #(1) exe_done_d2_ff (.clk(clk), .rst(rst), .d(exe_done_d1), .q(exe_done_d2)); 
+dflip #(1) exe_done_d3_ff (.clk(clk), .rst(rst), .d(exe_done_d2), .q(exe_done_d3)); 
 
 wire [31:0] shift_quotient;
 wire [31:0] shift_quotient_q;
@@ -202,6 +204,8 @@ dflip_en #(32) shift_quotient_ff (.clk(clk), .rst(rst), .en(exe_done_d1), .d(shi
 
 //step 6
 wire [31:0] norm_quotient;
+wire [31:0] norm_quotient_d3;
+
 assign norm_quotient = ~(|shift_quotient_q[31:0 ]) ? 32'd0                  :
                        ~(|shift_quotient_q[31:1 ]) ? {shift_quotient_q, 31'b0} :
                        ~(|shift_quotient_q[31:2 ]) ? {shift_quotient_q, 30'b0} :
@@ -236,6 +240,7 @@ assign norm_quotient = ~(|shift_quotient_q[31:0 ]) ? 32'd0                  :
                        ~(|shift_quotient_q[31   ]) ? {shift_quotient_q, 1 'b0} : shift_quotient_q ;
 
 wire [7:0] norm_quotient_bias;
+wire [7:0] norm_quotient_bias_d3;
 assign norm_quotient_bias = ~(|shift_quotient_q[31:0 ])  ? quotient_exp_q - 8'd32 :
                             ~(|shift_quotient_q[31:1 ])  ? quotient_exp_q - 8'd31 :
                             ~(|shift_quotient_q[31:2 ])  ? quotient_exp_q - 8'd30 :
@@ -269,16 +274,19 @@ assign norm_quotient_bias = ~(|shift_quotient_q[31:0 ])  ? quotient_exp_q - 8'd3
                             ~(|shift_quotient_q[31:30])  ? quotient_exp_q - 8'd2  :
                             ~(|shift_quotient_q[31   ])  ? quotient_exp_q - 8'd1  : quotient_exp_q;
 
+dflip_en #(8) norm_quotient_bias_ff (.clk(clk), .rst(rst), .en(exe_done_d2), .d(norm_quotient_bias), .q(norm_quotient_bias_d3)); 
+dflip_en #(32) norm_quotient_ff      (.clk(clk), .rst(rst), .en(exe_done_d2), .d(norm_quotient     ), .q(norm_quotient_d3     )); 
+
 wire [31:0] div_result_754_pre;
 assign div_result_754_pre[31] = (inputa_sign_754 ^ inputb_sign_754);
-assign div_result_754_pre[30:23] = norm_quotient_bias;
-assign div_result_754_pre[22:0] = norm_quotient[7] ? norm_quotient[30:8] + 23'b1 : {norm_quotient[30:9], 1'b0};
+assign div_result_754_pre[30:23] = norm_quotient_bias_d3;
+assign div_result_754_pre[22:0] = norm_quotient_d3[7] ? norm_quotient_d3[30:8] + 23'b1 : {norm_quotient_d3[30:9], 1'b0};
 
 wire [31:0] div_result_754_qual;
 assign div_result_754_qual = ~(|inputa_754) ? 32'b0: div_result_754_pre;
 
 //assign div_pre_done = fsmdiv_in_done;
-dflip_en #(32) div_result_ff (.clk(clk), .rst(rst), .en(exe_done_d2), .d(div_result_754_qual), .q(div_result_754)); 
-dflip #(1) div_done_ff (.clk(clk), .rst(rst), .d(exe_done_d2), .q(div_done)); 
+dflip_en #(32) div_result_ff (.clk(clk), .rst(rst), .en(exe_done_d3), .d(div_result_754_qual), .q(div_result_754)); 
+dflip #(1) div_done_ff (.clk(clk), .rst(rst), .d(exe_done_d3), .q(div_done)); 
 
 endmodule;
