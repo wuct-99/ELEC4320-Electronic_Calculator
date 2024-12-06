@@ -95,31 +95,32 @@ assign cvt_lv1_en = cvt_cnt_q == 2'b1;
 assign cvt_lv2_en = cvt_cnt_q == 2'b10;
 assign cvt_lv3_en = cvt_cnt_q == 2'b11;
 
+wire [31:0] integer_part_dec_pre;
 wire [31:0] integer_part_dec;
-assign integer_part_dec = {32{exp_qual_eq_p23}} & {8'b0 , mantissa[23:0 ]} |
-                          {32{exp_qual_eq_p22}} & {9'b0 , mantissa[23:1 ]} |
-                          {32{exp_qual_eq_p21}} & {10'b0, mantissa[23:2 ]} |
-                          {32{exp_qual_eq_p20}} & {11'b0, mantissa[23:3 ]} |
-                          {32{exp_qual_eq_p19}} & {12'b0, mantissa[23:4 ]} |
-                          {32{exp_qual_eq_p18}} & {13'b0, mantissa[23:5 ]} |
-                          {32{exp_qual_eq_p17}} & {14'b0, mantissa[23:6 ]} |
-                          {32{exp_qual_eq_p16}} & {15'b0, mantissa[23:7 ]} |
-                          {32{exp_qual_eq_p15}} & {16'b0, mantissa[23:8 ]} |
-                          {32{exp_qual_eq_p14}} & {17'b0, mantissa[23:9 ]} |
-                          {32{exp_qual_eq_p13}} & {18'b0, mantissa[23:10]} |
-                          {32{exp_qual_eq_p12}} & {19'b0, mantissa[23:11]} |
-                          {32{exp_qual_eq_p11}} & {20'b0, mantissa[23:12]} |
-                          {32{exp_qual_eq_p10}} & {21'b0, mantissa[23:13]} |
-                          {32{exp_qual_eq_p9 }} & {22'b0, mantissa[23:14]} |
-                          {32{exp_qual_eq_p8 }} & {23'b0, mantissa[23:15]} |
-                          {32{exp_qual_eq_p7 }} & {24'b0, mantissa[23:16]} |
-                          {32{exp_qual_eq_p6 }} & {25'b0, mantissa[23:17]} |
-                          {32{exp_qual_eq_p5 }} & {26'b0, mantissa[23:18]} |
-                          {32{exp_qual_eq_p4 }} & {27'b0, mantissa[23:19]} |
-                          {32{exp_qual_eq_p3 }} & {28'b0, mantissa[23:20]} |
-                          {32{exp_qual_eq_p2 }} & {29'b0, mantissa[23:21]} |
-                          {32{exp_qual_eq_p1 }} & {30'b0, mantissa[23:22]} | 
-                          {32{exp_qual_eq_p0 }} & {31'b0, mantissa[23   ]} ;
+assign integer_part_dec_pre = {32{exp_qual_eq_p23}} & {8'b0 , mantissa[23:0 ]} |
+                              {32{exp_qual_eq_p22}} & {9'b0 , mantissa[23:1 ]} |
+                              {32{exp_qual_eq_p21}} & {10'b0, mantissa[23:2 ]} |
+                              {32{exp_qual_eq_p20}} & {11'b0, mantissa[23:3 ]} |
+                              {32{exp_qual_eq_p19}} & {12'b0, mantissa[23:4 ]} |
+                              {32{exp_qual_eq_p18}} & {13'b0, mantissa[23:5 ]} |
+                              {32{exp_qual_eq_p17}} & {14'b0, mantissa[23:6 ]} |
+                              {32{exp_qual_eq_p16}} & {15'b0, mantissa[23:7 ]} |
+                              {32{exp_qual_eq_p15}} & {16'b0, mantissa[23:8 ]} |
+                              {32{exp_qual_eq_p14}} & {17'b0, mantissa[23:9 ]} |
+                              {32{exp_qual_eq_p13}} & {18'b0, mantissa[23:10]} |
+                              {32{exp_qual_eq_p12}} & {19'b0, mantissa[23:11]} |
+                              {32{exp_qual_eq_p11}} & {20'b0, mantissa[23:12]} |
+                              {32{exp_qual_eq_p10}} & {21'b0, mantissa[23:13]} |
+                              {32{exp_qual_eq_p9 }} & {22'b0, mantissa[23:14]} |
+                              {32{exp_qual_eq_p8 }} & {23'b0, mantissa[23:15]} |
+                              {32{exp_qual_eq_p7 }} & {24'b0, mantissa[23:16]} |
+                              {32{exp_qual_eq_p6 }} & {25'b0, mantissa[23:17]} |
+                              {32{exp_qual_eq_p5 }} & {26'b0, mantissa[23:18]} |
+                              {32{exp_qual_eq_p4 }} & {27'b0, mantissa[23:19]} |
+                              {32{exp_qual_eq_p3 }} & {28'b0, mantissa[23:20]} |
+                              {32{exp_qual_eq_p2 }} & {29'b0, mantissa[23:21]} |
+                              {32{exp_qual_eq_p1 }} & {30'b0, mantissa[23:22]} | 
+                              {32{exp_qual_eq_p0 }} & {31'b0, mantissa[23   ]} ;
 
 wire [22:0] pos_exp_fraction_part;
 assign pos_exp_fraction_part = {23{exp_qual_eq_p15}} & {mantissa[7:0 ], 15'b0} |                           
@@ -145,6 +146,15 @@ assign neg_exp_fraction_part = mantissa_shift[22:0];
 wire [22:0] exp_fraction_part;
 assign exp_fraction_part = exp_qual[7] ? neg_exp_fraction_part : pos_exp_fraction_part;
 
+wire [32:0] exp_fraction_2n0;
+wire [32:0] exp_fraction_2n1;
+wire [32:0] exp_fraction_2n2;
+wire [32:0] exp_fraction_2n3;
+wire [32:0] exp_fraction_2n4;
+wire [32:0] exp_fraction_2n5;
+wire [32:0] exp_fraction_2n6;
+wire [32:0] exp_fraction_2n7;
+wire [32:0] exp_fraction_2n8;
 wire [32:0] exp_fraction_2n9;
 wire [32:0] exp_fraction_2n10;
 wire [32:0] exp_fraction_2n11;
@@ -196,6 +206,14 @@ wire [31:0] exp_fraction_dec_lv1_3_q;
 wire [31:0] exp_fraction_dec_lv2_0_q;
 wire [31:0] exp_fraction_dec_lv2_1_q;
 
+assign exp_fraction_2n1  = {32{exp_fraction_part[22]}} & 32'd5_0000_0000;
+assign exp_fraction_2n2  = {32{exp_fraction_part[21]}} & 32'd2_5000_0000;
+assign exp_fraction_2n3  = {32{exp_fraction_part[20]}} & 32'd1_2500_0000;
+assign exp_fraction_2n4  = {32{exp_fraction_part[19]}} & 32'd0_6250_0000;
+assign exp_fraction_2n5  = {32{exp_fraction_part[18]}} & 32'd0_3125_0000;
+assign exp_fraction_2n6  = {32{exp_fraction_part[17]}} & 32'd0_1562_5000;
+assign exp_fraction_2n7  = {32{exp_fraction_part[16]}} & 32'd0_0781_2500;
+assign exp_fraction_2n8  = {32{exp_fraction_part[15]}} & 32'd0_0390_6250;
 assign exp_fraction_2n9  = {32{exp_fraction_part[14]}} & 32'd0_0195_3125;
 assign exp_fraction_2n10 = {32{exp_fraction_part[13]}} & 32'd0_0097_6562;
 assign exp_fraction_2n11 = {32{exp_fraction_part[12]}} & 32'd0_0048_8281;
@@ -212,31 +230,15 @@ assign exp_fraction_2n21 = {32{exp_fraction_part[2 ]}} & 32'd0_0000_0476;
 assign exp_fraction_2n22 = {32{exp_fraction_part[1 ]}} & 32'd0_0000_0238;
 assign exp_fraction_2n23 = {32{exp_fraction_part[0 ]}} & 32'd0_0000_0119;
 
-assign exp_fraction_dec_lv0_4  = exp_fraction_2n9 + exp_fraction_2n10 + exp_fraction_2n11 ;
+assign exp_fraction_dec_lv0_0  = exp_fraction_2n1 + exp_fraction_2n1;
+assign exp_fraction_dec_lv0_1  = exp_fraction_2n3 + exp_fraction_2n4;
+assign exp_fraction_dec_lv0_2  = exp_fraction_2n5 + exp_fraction_2n6;
+assign exp_fraction_dec_lv0_3  = exp_fraction_2n7 + exp_fraction_2n8;
+assign exp_fraction_dec_lv0_4  = exp_fraction_2n9 + exp_fraction_2n10 + exp_fraction_2n11;
 assign exp_fraction_dec_lv0_5  = exp_fraction_2n12 + exp_fraction_2n13 + exp_fraction_2n14;
 assign exp_fraction_dec_lv0_6  = exp_fraction_2n15 + exp_fraction_2n16 + exp_fraction_2n17;
 assign exp_fraction_dec_lv0_7  = exp_fraction_2n18 + exp_fraction_2n19 + exp_fraction_2n20;
 assign exp_fraction_dec_lv0_8  = exp_fraction_2n21 + exp_fraction_2n22 + exp_fraction_2n23;
-
-assign exp_fraction_dec_lv0_0  = {32{ exp_fraction_part[22] &  exp_fraction_part[21]}} & 32'd7_5000_0000 | 
-                                 {32{ exp_fraction_part[22] & ~exp_fraction_part[21]}} & 32'd5_0000_0000 | 
-                                 {32{~exp_fraction_part[22] &  exp_fraction_part[21]}} & 32'd2_5000_0000 | 
-                                 {32{~exp_fraction_part[22] & ~exp_fraction_part[21]}} & 32'd0;
-
-assign exp_fraction_dec_lv0_1  = {32{ exp_fraction_part[20] &  exp_fraction_part[19]}} & 32'd1_8750_0000 | 
-                                 {32{ exp_fraction_part[20] & ~exp_fraction_part[19]}} & 32'd1_2500_0000 | 
-                                 {32{~exp_fraction_part[20] &  exp_fraction_part[19]}} & 32'd0_6250_0000 | 
-                                 {32{~exp_fraction_part[20] & ~exp_fraction_part[19]}} & 32'd0;
-
-assign exp_fraction_dec_lv0_2  = {32{ exp_fraction_part[18] &  exp_fraction_part[17]}} & 32'd0_4687_0000 | 
-                                 {32{ exp_fraction_part[18] & ~exp_fraction_part[17]}} & 32'd0_3125_0000 | 
-                                 {32{~exp_fraction_part[18] &  exp_fraction_part[17]}} & 32'd0_1562_0000 | 
-                                 {32{~exp_fraction_part[18] & ~exp_fraction_part[17]}} & 32'd0;
-
-assign exp_fraction_dec_lv0_3  = {32{ exp_fraction_part[16] &  exp_fraction_part[15]}} & 32'd0_1171_8750 | 
-                                 {32{ exp_fraction_part[16] & ~exp_fraction_part[15]}} & 32'd0_0781_2500 | 
-                                 {32{~exp_fraction_part[16] &  exp_fraction_part[15]}} & 32'd0_0390_6250 | 
-                                 {32{~exp_fraction_part[16] & ~exp_fraction_part[15]}} & 32'd0;
 
 
 dflip_en #(32) exp_fraction_dec_lv0_0_ff  (.clk(clk), .rst(rst), .en(cvt_lv0_en), .d(exp_fraction_dec_lv0_0 ), .q(exp_fraction_dec_lv0_0_q));
@@ -267,6 +269,7 @@ dflip_en #(32) exp_fraction_dec_lv2_1_ff  (.clk(clk), .rst(rst), .en(cvt_lv2_en)
 
 assign exp_fraction_dec_lv3  = exp_fraction_dec_lv2_0_q + exp_fraction_dec_lv2_1_q;
 dflip_en #(32) exp_fraction_dec_lv3_ff  (.clk(clk), .rst(rst), .en(cvt_lv3_en), .d(exp_fraction_dec_lv3), .q(exp_fraction_dec));
+dflip_en #(32) integer_part_dec_lv3_ff  (.clk(clk), .rst(rst), .en(cvt_lv3_en), .d(integer_part_dec_pre), .q(integer_part_dec));
 
 wire input_is0;
 assign input_is0 = ~(|input_754);
