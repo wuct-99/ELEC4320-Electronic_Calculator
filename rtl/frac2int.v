@@ -194,29 +194,6 @@ assign exp_fraction_2n22 = {32{exp_fraction_part[1 ]}} & 32'd0_0000_0238;
 assign exp_fraction_2n23 = {32{exp_fraction_part[0 ]}} & 32'd0_0000_0119;
 
 wire [31:0] exp_fraction_dec;
-//assign exp_fraction_dec = exp_fraction_2n1  + 
-//                          exp_fraction_2n2  + 
-//                          exp_fraction_2n3  + 
-//                          exp_fraction_2n4  + 
-//                          exp_fraction_2n5  + 
-//                          exp_fraction_2n6  + 
-//                          exp_fraction_2n7  + 
-//                          exp_fraction_2n8  + 
-//                          exp_fraction_2n9  + 
-//                          exp_fraction_2n10 + 
-//                          exp_fraction_2n11 + 
-//                          exp_fraction_2n12 + 
-//                          exp_fraction_2n13 + 
-//                          exp_fraction_2n14 + 
-//                          exp_fraction_2n15 + 
-//                          exp_fraction_2n16 +
-//                          exp_fraction_2n17 +
-//                          exp_fraction_2n18 +
-//                          exp_fraction_2n19 +
-//                          exp_fraction_2n20 +
-//                          exp_fraction_2n21 +
-//                          exp_fraction_2n22 +
-//                          exp_fraction_2n23 ;
 wire [31:0] exp_fraction_dec_lv0_0 ;
 wire [31:0] exp_fraction_dec_lv0_1 ;
 wire [31:0] exp_fraction_dec_lv0_2 ;

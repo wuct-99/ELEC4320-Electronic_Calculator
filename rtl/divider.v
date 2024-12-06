@@ -61,10 +61,6 @@ dflip_en #(`FSMDIV_STATE_WIDTH, `FSMDIV_STATE_WIDTH'h1) fsmdiv_state_ff (.clk(cl
                                                                          .d(fsmdiv_next_state), 
                                                                          .q(fsmdiv_curr_state));
 
-
-//wire [31:0] inputa_754 = 32'h4479c000;
-//wire [31:0] inputb_754 = 32'h41b80000;
-
 //Step 1: decode IEEE754
 wire inputa_sign_754;
 wire inputb_sign_754;

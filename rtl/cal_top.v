@@ -476,16 +476,10 @@ assign multi_cyc_op = op_qual[`OP_DIV];
 
 
 //init counter
-wire init_cnt_rst;
 wire [1:0] init_cnt_d;
 wire [1:0] init_cnt_q;
 wire init_cnt_en;
 
-//assign init_cnt_rst = fsme_next_init; 
-//assign init_cnt_d = init_cnt_rst ? 2'b00 : init_cnt_q + 2'b01;
-//assign init_cnt_en = fsme_in_init | init_cnt_rst;
-//dflip_en #(2) init_cnt_ff (.clk(clk), .rst(rst), .en(init_cnt_en), .d(init_cnt_d), .q(init_cnt_q));
-//assign init_cnt_rst = fsme_next_init ; 
 assign init_cnt_d = init_cnt_q + 2'b01;
 assign init_cnt_en = fsme_in_init | fsme_in_done;
 dflip_en #(2) init_cnt_ff (.clk(clk), .rst(rst), .en(init_cnt_en), .d(init_cnt_d), .q(init_cnt_q));
