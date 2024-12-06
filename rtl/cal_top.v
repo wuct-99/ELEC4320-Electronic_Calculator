@@ -172,42 +172,35 @@ wire cvt_cnt_en;
 wire cvt_cnt_rst;
 
 wire result_sign;
-wire [3:0] int_digit_9_for_display;
-wire [3:0] int_digit_8_for_display;
-wire [3:0] int_digit_7_for_display;
-wire [3:0] int_digit_6_for_display;
-wire [3:0] int_digit_5_for_display;
-wire [3:0] int_digit_4_for_display;
-wire [3:0] int_digit_3_for_display;
-wire [3:0] int_digit_2_for_display;
-wire [3:0] int_digit_1_for_display;
-wire [3:0] int_digit_0_for_display;
-wire [3:0] frac_digit_9_for_display;
-wire [3:0] frac_digit_8_for_display;
-wire [3:0] frac_digit_7_for_display;
-wire [3:0] frac_digit_6_for_display;
-wire [3:0] frac_digit_5_for_display;
-wire [3:0] frac_digit_4_for_display;
-wire [3:0] frac_digit_3_for_display;
-wire [3:0] frac_digit_2_for_display;
-wire [3:0] frac_digit_1_for_display;
-wire [3:0] frac_digit_0_for_display;
+//wire [3:0] int_digit_9_for_display;
+//wire [3:0] int_digit_8_for_display;
+//wire [3:0] int_digit_7_for_display;
+wire [3:0] output_digit9_for_display;
+wire [3:0] output_digit8_for_display;
+wire [3:0] output_digit7_for_display;
 
-//wire [3:0] sign_for_remain;
-//wire [3:0] digit3_for_remain;
-wire [3:0] int_sign_for_lv1;
-wire [3:0] int_digit2_for_lv1;
-wire [3:0] int_digit1_for_lv1;
-wire [3:0] int_digit0_for_lv1;
-wire [3:0] int_sign_for_lv2;
-wire [3:0] int_digit2_for_lv2;
-wire [3:0] int_digit1_for_lv2;
-wire [3:0] int_digit0_for_lv2;
+//wire [3:0] int_sign_for_lv1;
+//wire [3:0] int_digit2_for_lv1;
+//wire [3:0] int_digit1_for_lv1;
+//wire [3:0] int_digit0_for_lv1;
+//wire [3:0] int_sign_for_lv2;
+//wire [3:0] int_digit2_for_lv2;
+//wire [3:0] int_digit1_for_lv2;
+//wire [3:0] int_digit0_for_lv2;
+wire [3:0] output_sign_for_lv1;
+wire [3:0] output_digit2_for_lv1;
+wire [3:0] output_digit1_for_lv1;
+wire [3:0] output_digit0_for_lv1;
+wire [3:0] output_sign_for_lv2;
+wire [3:0] output_digit2_for_lv2;
+wire [3:0] output_digit1_for_lv2;
+wire [3:0] output_digit0_for_lv2;
 
 //display stage
 wire [`DISP_STG_WIDTH-1:0] total_disp_stage_pre;
 wire [`DISP_STG_WIDTH-1:0] total_disp_stage_qual;
 wire [2:0] int_stage_final; 
+wire [2:0] frac_stage_final; 
 
 
 wire display_stage_en;
@@ -417,26 +410,25 @@ assign input_digit_curr = {`DIGIT_WIDTH{digit_cnt_id0}} & digit0_q |
                           {`DIGIT_WIDTH{digit_cnt_id2}} & digit2_q |
                           {`DIGIT_WIDTH{digit_cnt_id3}} & {3'b101, sign_q} ;
 
-assign output_int_lv0 = {`DIGIT_WIDTH{digit_cnt_id0}} & int_digit_7_for_display |
-                        {`DIGIT_WIDTH{digit_cnt_id1}} & int_digit_8_for_display |
-                        {`DIGIT_WIDTH{digit_cnt_id2}} & int_digit_9_for_display |
+assign output_int_lv0 = {`DIGIT_WIDTH{digit_cnt_id0}} & output_digit7_for_display |
+                        {`DIGIT_WIDTH{digit_cnt_id1}} & output_digit8_for_display |
+                        {`DIGIT_WIDTH{digit_cnt_id2}} & output_digit9_for_display |
                         {`DIGIT_WIDTH{digit_cnt_id3}} & {3'b101, result_sign}   ;
 
-assign output_int_lv1 = {`DIGIT_WIDTH{digit_cnt_id0}} & int_digit0_for_lv1 |
-                        {`DIGIT_WIDTH{digit_cnt_id1}} & int_digit1_for_lv1 |
-                        {`DIGIT_WIDTH{digit_cnt_id2}} & int_digit2_for_lv1 |
-                        {`DIGIT_WIDTH{digit_cnt_id3}} & int_sign_for_lv1 ;
+assign output_int_lv1 = {`DIGIT_WIDTH{digit_cnt_id0}} & output_digit0_for_lv1 |
+                        {`DIGIT_WIDTH{digit_cnt_id1}} & output_digit1_for_lv1 |
+                        {`DIGIT_WIDTH{digit_cnt_id2}} & output_digit2_for_lv1 |
+                        {`DIGIT_WIDTH{digit_cnt_id3}} & output_sign_for_lv1 ;
 
-assign output_int_lv2 = {`DIGIT_WIDTH{digit_cnt_id0}} & int_digit0_for_lv2 |
-                        {`DIGIT_WIDTH{digit_cnt_id1}} & int_digit1_for_lv2 |
-                        {`DIGIT_WIDTH{digit_cnt_id2}} & int_digit2_for_lv2 |
-                        {`DIGIT_WIDTH{digit_cnt_id3}} & int_sign_for_lv2 ;
+assign output_int_lv2 = {`DIGIT_WIDTH{digit_cnt_id0}} & output_digit0_for_lv2 |
+                        {`DIGIT_WIDTH{digit_cnt_id1}} & output_digit1_for_lv2 |
+                        {`DIGIT_WIDTH{digit_cnt_id2}} & output_digit2_for_lv2 |
+                        {`DIGIT_WIDTH{digit_cnt_id3}} & output_sign_for_lv2 ;
 
 assign digit_val = (fsmc_in_inputa | fsmc_in_inputb) ? input_digit_curr : 
                    (fsmc_in_display & (display_stage_q == 3'b00)) ? output_int_lv0 :
                    (fsmc_in_display & (display_stage_q == 3'b01)) ? output_int_lv1 : 
                    (fsmc_in_display & (display_stage_q == 3'b11)) ? output_int_lv2 : 4'ha;
-
 
 
 //7-segment Ouput decoder
@@ -481,11 +473,8 @@ assign int_result_op = op_qual[`OP_ADD] | op_qual[`OP_SUB] | op_qual[`OP_MUL];
 assign single_cyc_op = op_qual[`OP_ADD] |
                        op_qual[`OP_SUB] |
                        op_qual[`OP_MUL] ;
-                       
 assign multi_cyc_op = op_qual[`OP_DIV];
 
-wire frac_result_op;
-assign frac_result_op = op_qual[`OP_DIV];
 
 //init counter
 wire init_cnt_rst;
@@ -610,7 +599,7 @@ divider u_divider(.clk(clk),
 );
 
 wire [31:0] frac_dec_qual;
-wire [15:0] int_dec_qual     ;
+wire [31:0] int_dec_qual     ;
 wire [2:0] lead0_num        ;
 wire i754_overflow;
 
@@ -642,7 +631,7 @@ wire div_overflow;
 assign div_overflow = op_qual[`OP_DIV] & i754_overflow; 
 
 assign overflow = 0;//mul_overflow;
-assign invld_result = invld_input | overflow ;
+assign invld_result = invld_input | overflow | div_overflow;
 
 assign cvt_cnt_rst = exe_pre_done;
 assign cvt_cnt_en = fsmc_in_convert | cvt_cnt_rst;
@@ -677,72 +666,144 @@ bin2decdigit u_bin2decdigit_for_frac(
 );
 wire [39:0] int_digits_for_display;
 wire [39:0] frac_digits_for_display;
-wire [9:0] int_digit_idx_is0;
-wire [9:0] frac_digit_idx_is0;
+wire [9:0] int_digits_idx_is0;
+wire signed [9:0] frac_digits_idx_is0;
 
 digit_shift u_digit_shift_for_int(
     .clk(clk),
     .rst(rst),
     .input_dec(int_dec_digit),
     .output_digits(int_digits_for_display),
-    .digit_idx_is0(int_digit_idx_is0)
+    .digit_idx_is0(int_digits_idx_is0)
 );
 
-assign int_digit_0_for_display = int_digits_for_display[3:0];
-assign int_digit_1_for_display = int_digits_for_display[7:4];
-assign int_digit_2_for_display = int_digits_for_display[11:8];
-assign int_digit_3_for_display = int_digits_for_display[15:12];
-assign int_digit_4_for_display = int_digits_for_display[19:16];
-assign int_digit_5_for_display = int_digits_for_display[23:20];
-assign int_digit_6_for_display = int_digits_for_display[27:24];
-assign int_digit_7_for_display = int_digits_for_display[31:28];
-assign int_digit_8_for_display = int_digits_for_display[35:32];
-assign int_digit_9_for_display = int_digits_for_display[39:36];
 
 digit_shift u_digit_shift_for_frac(
     .clk(clk),
     .rst(rst),
     .input_dec(frac_dec_digit),
     .output_digits(frac_digits_for_display),
-    .digit_idx_is0(frac_digit_idx_is0)
+    .digit_idx_is0(frac_digits_idx_is0)
 );
 
-assign frac_digit_0_for_display = frac_digits_for_display[3:0];
-assign frac_digit_1_for_display = frac_digits_for_display[7:4];
-assign frac_digit_2_for_display = frac_digits_for_display[11:8];
-assign frac_digit_3_for_display = frac_digits_for_display[15:12];
-assign frac_digit_4_for_display = frac_digits_for_display[19:16];
-assign frac_digit_5_for_display = frac_digits_for_display[23:20];
-assign frac_digit_6_for_display = frac_digits_for_display[27:24];
-assign frac_digit_7_for_display = frac_digits_for_display[31:28];
-assign frac_digit_8_for_display = frac_digits_for_display[35:32];
-assign frac_digit_9_for_display = frac_digits_for_display[39:36];
 
 //display digit
-wire [15:0] int_digits_for_display_lv1;
-wire [15:0] int_digits_for_display_lv2;
-
-assign int_digits_for_display_lv1 = {int_digits_for_display[27:12]};
-assign int_digits_for_display_lv2 = {int_digits_for_display[11:0], 4'ha};
-
-assign int_sign_for_lv1   = int_digits_for_display_lv1[15:12];
-assign int_digit2_for_lv1 = int_digits_for_display_lv1[11:8];
-assign int_digit1_for_lv1 = int_digits_for_display_lv1[7:4];
-assign int_digit0_for_lv1 = int_digits_for_display_lv1[3:0];
-
-assign int_sign_for_lv2   = int_digits_for_display_lv2[15:12];
-assign int_digit2_for_lv2 = int_digits_for_display_lv2[11:8];
-assign int_digit1_for_lv2 = int_digits_for_display_lv2[7:4];
-assign int_digit0_for_lv2 = int_digits_for_display_lv2[3:0];
-
-assign int_stage_final = |int_digit_idx_is0[2:0] ? 3'b01 :
-                         |int_digit_idx_is0[6:3] & ~(|int_digit_idx_is0[2:0]) ? 3'b10 : 3'b11;
+//display frac
+wire int_part_is0;
+wire frac_part_is0;
+assign int_part_is0 = &int_digits_idx_is0;
+assign frac_part_is0 = &frac_digits_idx_is0;
 
 
-assign total_disp_stage_pre = {`DISP_STG_WIDTH{int_result_op}} & int_stage_final;
+wire [39:0] int_digits_add_dots;
+assign int_digits_add_dots[39:36] = int_digits_for_display[39:36];
+assign int_digits_add_dots[35:32] = (~int_digits_idx_is0[9] & int_digits_idx_is0[8]) | int_part_is0 ? 4'hc : int_digits_for_display[35:32];
+assign int_digits_add_dots[31:28] = ~int_digits_idx_is0[8] & int_digits_idx_is0[7] ? 4'hc : int_digits_for_display[31:28];
+assign int_digits_add_dots[27:24] = ~int_digits_idx_is0[7] & int_digits_idx_is0[6] ? 4'hc : int_digits_for_display[27:24];
+assign int_digits_add_dots[23:20] = ~int_digits_idx_is0[6] & int_digits_idx_is0[5] ? 4'hc : int_digits_for_display[23:20];
+assign int_digits_add_dots[19:16] = ~int_digits_idx_is0[5] & int_digits_idx_is0[4] ? 4'hc : int_digits_for_display[19:16];
+assign int_digits_add_dots[15:12] = ~int_digits_idx_is0[4] & int_digits_idx_is0[3] ? 4'hc : int_digits_for_display[15:12];
+assign int_digits_add_dots[11:8 ] = ~int_digits_idx_is0[3] & int_digits_idx_is0[2] ? 4'hc : int_digits_for_display[11:8 ];
+assign int_digits_add_dots[7:4  ] = ~int_digits_idx_is0[2] & int_digits_idx_is0[1] ? 4'hc : int_digits_for_display[7:4  ];
+assign int_digits_add_dots[3:0  ] = ~int_digits_idx_is0[1] & int_digits_idx_is0[0] ? 4'ha : int_digits_for_display[3:0  ];
+
+wire [9:0] int_digits_idx_is0_non0int_adj;
+assign int_digits_idx_is0_non0int_adj = {10{(~int_digits_idx_is0[9] & int_digits_idx_is0[8]) | 
+                                            (~int_digits_idx_is0[8] & int_digits_idx_is0[7]) | 
+                                            (~int_digits_idx_is0[7] & int_digits_idx_is0[6]) | 
+                                            (~int_digits_idx_is0[6] & int_digits_idx_is0[5]) | 
+                                            (~int_digits_idx_is0[5] & int_digits_idx_is0[4]) | 
+                                            (~int_digits_idx_is0[4] & int_digits_idx_is0[3]) | 
+                                            (~int_digits_idx_is0[3] & int_digits_idx_is0[2]) | 
+                                            (~int_digits_idx_is0[2] & int_digits_idx_is0[1]) }} & {1'b0, int_digits_idx_is0[9:1]} ;
+wire [9:0] int_digits_idx_is0_adj;
+assign int_digits_idx_is0_adj = int_part_is0 ? 10'b00_1111_1111 : int_digits_idx_is0_non0int_adj;
+
+wire [39:0] frac_digits_for_display_adj;
+assign frac_digits_for_display_adj = {frac_digits_for_display[39:20], {5{4'ha}}};
+
+wire [39:0] frac_digits_for_display_shift_lead0;
+assign frac_digits_for_display_shift_lead0 = frac_part_is0 ? {40'h00_0aaa_aaaa} : frac_digits_for_display_adj >> {lead0_num, 2'b00};
+
+wire [39:0] frac_digits_for_display_align_non0int;
+assign frac_digits_for_display_align_non0int = ~(|int_digits_idx_is0_non0int_adj[9:0]) ? frac_digits_for_display_shift_lead0 :
+                                               ~(|int_digits_idx_is0_non0int_adj[9:1]) ? frac_digits_for_display_shift_lead0 >> 36 :
+                                               ~(|int_digits_idx_is0_non0int_adj[9:2]) ? frac_digits_for_display_shift_lead0 >> 32 :
+                                               ~(|int_digits_idx_is0_non0int_adj[9:3]) ? frac_digits_for_display_shift_lead0 >> 28 :
+                                               ~(|int_digits_idx_is0_non0int_adj[9:4]) ? frac_digits_for_display_shift_lead0 >> 24 :
+                                               ~(|int_digits_idx_is0_non0int_adj[9:5]) ? frac_digits_for_display_shift_lead0 >> 20 :
+                                               ~(|int_digits_idx_is0_non0int_adj[9:6]) ? frac_digits_for_display_shift_lead0 >> 16 :
+                                               ~(|int_digits_idx_is0_non0int_adj[9:7]) ? frac_digits_for_display_shift_lead0 >> 12 :
+                                               ~(|int_digits_idx_is0_non0int_adj[9:8]) ? frac_digits_for_display_shift_lead0 >> 8  : frac_digits_for_display_shift_lead0 >> 4;
+
+wire [39:0] frac_digits_for_display_align_int;
+assign frac_digits_for_display_align_int = int_part_is0 ? {8'b0, frac_digits_for_display_shift_lead0[39:8]} : frac_digits_for_display_align_non0int;
+
+wire [39:0] mask_for_int_part;
+wire [39:0] mask_for_frac_part;
+
+assign mask_for_frac_part  = {{4{int_digits_idx_is0_adj[9]}}, 
+                              {4{int_digits_idx_is0_adj[8]}}, 
+                              {4{int_digits_idx_is0_adj[7]}}, 
+                              {4{int_digits_idx_is0_adj[6]}}, 
+                              {4{int_digits_idx_is0_adj[5]}}, 
+                              {4{int_digits_idx_is0_adj[4]}}, 
+                              {4{int_digits_idx_is0_adj[3]}}, 
+                              {4{int_digits_idx_is0_adj[2]}}, 
+                              {4{int_digits_idx_is0_adj[1]}}, 
+                              {4{int_digits_idx_is0_adj[0]}}};
+assign mask_for_int_part = ~mask_for_frac_part;
+
+wire [39:0] int_frac_digits_for_display;
+assign int_frac_digits_for_display = int_digits_add_dots & mask_for_int_part | frac_digits_for_display_align_int & mask_for_frac_part;
+
+wire [8:0] int_frac_digits_isa;
+
+assign int_frac_digits_isa[8] = int_frac_digits_for_display[35:32] == 4'ha;
+assign int_frac_digits_isa[7] = int_frac_digits_for_display[31:28] == 4'ha;
+assign int_frac_digits_isa[6] = int_frac_digits_for_display[27:24] == 4'ha;
+assign int_frac_digits_isa[5] = int_frac_digits_for_display[23:20] == 4'ha;
+assign int_frac_digits_isa[4] = int_frac_digits_for_display[19:16] == 4'ha;
+assign int_frac_digits_isa[3] = int_frac_digits_for_display[15:12] == 4'ha;
+assign int_frac_digits_isa[2] = int_frac_digits_for_display[11:8 ] == 4'ha;
+assign int_frac_digits_isa[1] = int_frac_digits_for_display[7:4  ] == 4'ha;
+assign int_frac_digits_isa[0] = int_frac_digits_for_display[3:0  ] == 4'ha;
+
+//Display Digit Selection
+wire [39:0] output_digits_for_display;
+assign output_digits_for_display = int_result_op ? int_digits_for_display : int_frac_digits_for_display;
+
+assign output_digit7_for_display = output_digits_for_display[31:28];
+assign output_digit8_for_display = output_digits_for_display[35:32];
+assign output_digit9_for_display = output_digits_for_display[39:36];
+
+wire [15:0] output_digits_for_display_lv1;
+wire [15:0] output_digits_for_display_lv2;
+
+assign output_digits_for_display_lv1 = {output_digits_for_display[27:12]};
+assign output_digits_for_display_lv2 = {output_digits_for_display[11:0], 4'ha};
+
+assign output_sign_for_lv1   = output_digits_for_display_lv1[15:12];
+assign output_digit2_for_lv1 = output_digits_for_display_lv1[11:8];
+assign output_digit1_for_lv1 = output_digits_for_display_lv1[7:4];
+assign output_digit0_for_lv1 = output_digits_for_display_lv1[3:0];
+
+assign output_sign_for_lv2   = output_digits_for_display_lv2[15:12];
+assign output_digit2_for_lv2 = output_digits_for_display_lv2[11:8];
+assign output_digit1_for_lv2 = output_digits_for_display_lv2[7:4];
+assign output_digit0_for_lv2 = output_digits_for_display_lv2[3:0];
+
+assign int_stage_final = |int_digits_idx_is0[9:6] ? 3'b01 :
+                         |int_digits_idx_is0[5:2] ? 3'b10 : 3'b11;
+
+assign frac_stage_final = |int_frac_digits_isa[8:6] ? 3'b01 :
+                          |int_frac_digits_isa[5:2] ? 3'b10 : 3'b11;
+
+assign total_disp_stage_pre = int_result_op ?  int_stage_final : frac_stage_final;
+
 assign display_stage_en = fsmc_in_display & button_mid & ~display_last_stage | fsmc_in_setup;
 assign display_stage = fsmc_in_setup ? 3'b0 : display_stage_q + 1'b1;
-assign display_last_stage = (display_stage == int_stage_final) | invld_result;
+assign display_last_stage = (display_stage == total_disp_stage_pre) | invld_result;
 
 dflip_en #(`DISP_STG_WIDTH) display_stage_ff (.clk(clk), .rst(rst), .en(display_stage_en), .d(display_stage), .q(display_stage_q));
 assign cal_board_display_stage = display_stage_q + 3'b1;

@@ -1,0 +1,12 @@
+verification/toptest/sim/csrc/
+verification/toptest/sim/*.conf
+verification/toptest/sim/*.rc
+verification/toptest/sim/*.log
+verification/toptest/sim/simv
+verification/toptest/sim/*.daidir/
+verification/toptest/sim/*.fsdb
+verification/toptest/sim/*.key
+verification/toptest/sim/verdiLog/
+*.swo
+*.swp
+

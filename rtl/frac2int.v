@@ -12,7 +12,7 @@ input clk;
 input rst;
 input [31:0] input_754;
 output [31:0] fraction_dec_qual;
-output [15:0] int_dec_qual;
+output [31:0] int_dec_qual;
 output [2:0]  lead0_num;
 output i754_overflow;
 
@@ -25,14 +25,22 @@ assign mantissa = {1'b1, input_754[22:0]};
 wire signed [7:0] exp_qual;
 assign exp_qual = exp - 8'd127;
 
-parameter signed PINT_16 = 8'd16;
+parameter signed PINT_23 = 8'd23;
 parameter signed NINT_16 = -8'd16;
 
-assign i754_overflow = exp_qual > PINT_16 | exp_qual < NINT_16 ;
+assign i754_overflow = exp_qual > PINT_23 | exp_qual < NINT_16 ;
 
 wire [23:0] mantissa_shift;
 assign mantissa_shift = mantissa >> ~exp_qual+1;
 
+wire exp_qual_eq_p23;
+wire exp_qual_eq_p22;
+wire exp_qual_eq_p21;
+wire exp_qual_eq_p20;
+wire exp_qual_eq_p19;
+wire exp_qual_eq_p18;
+wire exp_qual_eq_p17;
+wire exp_qual_eq_p16;
 wire exp_qual_eq_p15;
 wire exp_qual_eq_p14;
 wire exp_qual_eq_p13;
@@ -50,6 +58,14 @@ wire exp_qual_eq_p2 ;
 wire exp_qual_eq_p1 ;
 wire exp_qual_eq_p0 ;
 
+assign exp_qual_eq_p23 = exp_qual == 8'd23;
+assign exp_qual_eq_p22 = exp_qual == 8'd22;
+assign exp_qual_eq_p21 = exp_qual == 8'd21;
+assign exp_qual_eq_p20 = exp_qual == 8'd20;
+assign exp_qual_eq_p19 = exp_qual == 8'd19;
+assign exp_qual_eq_p18 = exp_qual == 8'd18;
+assign exp_qual_eq_p17 = exp_qual == 8'd17;
+assign exp_qual_eq_p16 = exp_qual == 8'd16;
 assign exp_qual_eq_p15 = exp_qual == 8'd15;
 assign exp_qual_eq_p14 = exp_qual == 8'd14;
 assign exp_qual_eq_p13 = exp_qual == 8'd13;
@@ -67,23 +83,58 @@ assign exp_qual_eq_p2  = exp_qual == 8'd2 ;
 assign exp_qual_eq_p1  = exp_qual == 8'd1 ;
 assign exp_qual_eq_p0  = exp_qual == 8'd0 ;
 
-wire [15:0] integer_part_dec;
-assign integer_part_dec = {16{exp_qual_eq_p15}} & {       mantissa[23:8 ]} |
-                          {16{exp_qual_eq_p14}} & {1'b0 , mantissa[23:9 ]} |
-                          {16{exp_qual_eq_p13}} & {2'b0 , mantissa[23:10]} |
-                          {16{exp_qual_eq_p12}} & {3'b0 , mantissa[23:11]} |
-                          {16{exp_qual_eq_p11}} & {4'b0 , mantissa[23:12]} |
-                          {16{exp_qual_eq_p10}} & {5'b0 , mantissa[23:13]} |
-                          {16{exp_qual_eq_p9 }} & {6'b0 , mantissa[23:14]} |
-                          {16{exp_qual_eq_p8 }} & {7'b0 , mantissa[23:15]} |
-                          {16{exp_qual_eq_p7 }} & {8'b0 , mantissa[23:16]} |
-                          {16{exp_qual_eq_p6 }} & {9'b0 , mantissa[23:17]} |
-                          {16{exp_qual_eq_p5 }} & {10'b0, mantissa[23:18]} |
-                          {16{exp_qual_eq_p4 }} & {11'b0, mantissa[23:19]} |
-                          {16{exp_qual_eq_p3 }} & {12'b0, mantissa[23:20]} |
-                          {16{exp_qual_eq_p2 }} & {13'b0, mantissa[23:21]} |
-                          {16{exp_qual_eq_p1 }} & {14'b0, mantissa[23:22]} | 
-                          {16{exp_qual_eq_p0 }} & {15'b0, mantissa[23   ]} ;
+//wire [15:0] integer_part_dec;
+//assign integer_part_dec = {16{exp_qual_eq_p15}} & {       mantissa[23:8 ]} |
+//                          {16{exp_qual_eq_p14}} & {1'b0 , mantissa[23:9 ]} |
+//                          {16{exp_qual_eq_p13}} & {2'b0 , mantissa[23:10]} |
+//                          {16{exp_qual_eq_p12}} & {3'b0 , mantissa[23:11]} |
+//                          {16{exp_qual_eq_p11}} & {4'b0 , mantissa[23:12]} |
+//                          {16{exp_qual_eq_p10}} & {5'b0 , mantissa[23:13]} |
+//                          {16{exp_qual_eq_p9 }} & {6'b0 , mantissa[23:14]} |
+//                          {16{exp_qual_eq_p8 }} & {7'b0 , mantissa[23:15]} |
+//                          {16{exp_qual_eq_p7 }} & {8'b0 , mantissa[23:16]} |
+//                          {16{exp_qual_eq_p6 }} & {9'b0 , mantissa[23:17]} |
+//                          {16{exp_qual_eq_p5 }} & {10'b0, mantissa[23:18]} |
+//                          {16{exp_qual_eq_p4 }} & {11'b0, mantissa[23:19]} |
+//                          {16{exp_qual_eq_p3 }} & {12'b0, mantissa[23:20]} |
+//                          {16{exp_qual_eq_p2 }} & {13'b0, mantissa[23:21]} |
+//                          {16{exp_qual_eq_p1 }} & {14'b0, mantissa[23:22]} | 
+//                          {16{exp_qual_eq_p0 }} & {15'b0, mantissa[23   ]} ;
+
+wire [31:0] integer_part_dec;
+assign integer_part_dec = {32{exp_qual_eq_p23}} & {8'b0 , mantissa[23:0 ]} |
+                          {32{exp_qual_eq_p22}} & {9'b0 , mantissa[23:1 ]} |
+                          {32{exp_qual_eq_p21}} & {10'b0, mantissa[23:2 ]} |
+                          {32{exp_qual_eq_p20}} & {11'b0, mantissa[23:3 ]} |
+                          {32{exp_qual_eq_p19}} & {12'b0, mantissa[23:4 ]} |
+                          {32{exp_qual_eq_p18}} & {13'b0, mantissa[23:5 ]} |
+                          {32{exp_qual_eq_p17}} & {14'b0, mantissa[23:6 ]} |
+                          {32{exp_qual_eq_p16}} & {15'b0, mantissa[23:7 ]} |
+                          {32{exp_qual_eq_p15}} & {16'b0, mantissa[23:8 ]} |
+                          {32{exp_qual_eq_p14}} & {17'b0, mantissa[23:9 ]} |
+                          {32{exp_qual_eq_p13}} & {18'b0, mantissa[23:10]} |
+                          {32{exp_qual_eq_p12}} & {19'b0, mantissa[23:11]} |
+                          {32{exp_qual_eq_p11}} & {20'b0, mantissa[23:12]} |
+                          {32{exp_qual_eq_p10}} & {21'b0, mantissa[23:13]} |
+                          {32{exp_qual_eq_p9 }} & {22'b0, mantissa[23:14]} |
+                          {32{exp_qual_eq_p8 }} & {23'b0, mantissa[23:15]} |
+                          {32{exp_qual_eq_p7 }} & {24'b0, mantissa[23:16]} |
+                          {32{exp_qual_eq_p6 }} & {25'b0, mantissa[23:17]} |
+                          {32{exp_qual_eq_p5 }} & {26'b0, mantissa[23:18]} |
+                          {32{exp_qual_eq_p4 }} & {27'b0, mantissa[23:19]} |
+                          {32{exp_qual_eq_p3 }} & {28'b0, mantissa[23:20]} |
+                          {32{exp_qual_eq_p2 }} & {29'b0, mantissa[23:21]} |
+                          {32{exp_qual_eq_p1 }} & {30'b0, mantissa[23:22]} | 
+                          {32{exp_qual_eq_p0 }} & {31'b0, mantissa[23   ]} ;
+
+
+
+
+
+
+
+
+
 
 wire [22:0] pos_exp_fraction_part;
 assign pos_exp_fraction_part = {23{exp_qual_eq_p15}} & {mantissa[7:0 ], 15'b0} |                           
