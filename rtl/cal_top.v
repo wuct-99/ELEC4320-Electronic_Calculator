@@ -152,14 +152,16 @@ wire signed [`RESULT_WIDTH-1:0] add_result;
 wire signed [`RESULT_WIDTH-1:0] sub_result;
 wire signed [31:0] mul_result;
 //result
-wire exe_pre_done;
+wire exe_done;
 wire cvt_done;
 
 
 wire overflow;
 wire signed [31:0] result_qual;
-wire signed [31:0] result_cvt_pre;
-wire signed [31:0] result_cvt_pre_q;
+wire signed [31:0] int_result_cvt_pre;
+wire signed [31:0] int_result_cvt_pre_q;
+
+
 wire invld_result;
 wire invld_input;
 wire invld_div;
@@ -264,7 +266,7 @@ assign fsmc_in_display = fsmc_curr_state[6];
 assign fsmc_idle_to_inputa     = fsmc_in_idle   ;
 assign fsmc_inputa_to_inputb   = fsmc_in_inputa  & button_mid;
 assign fsmc_inputb_to_exe      = fsmc_in_inputb  & button_mid;
-assign fsmc_exe_to_convert     = fsmc_in_exe     & exe_pre_done;
+assign fsmc_exe_to_convert     = fsmc_in_exe     & exe_done;
 assign fsmc_convert_to_setup   = fsmc_in_convert & cvt_done; //FIXME
 assign fsmc_setup_to_display   = fsmc_in_setup; 
 assign fsmc_display_to_inputa  = fsmc_in_display & button_mid & display_last_stage;
@@ -566,7 +568,7 @@ dflip_en #(`FSME_STATE_WIDTH, `FSME_STATE_WIDTH'h1) fsme_state_ff (.clk(clk),
                                                                    .d(fsme_next_state), 
                                                                    .q(fsme_curr_state));
 
-assign exe_pre_done = fsme_next_idle;
+assign exe_done = fsme_next_idle;
 
 //single cyc execute
 assign add_result = inputa + inputb;
@@ -600,6 +602,7 @@ divider u_divider(.clk(clk),
 );
 
 wire [31:0] frac_dec_qual;
+wire [31:0] frac_dec_qual_q;
 wire [31:0] int_dec_qual     ;
 wire [2:0] lead0_num        ;
 wire i754_overflow;
@@ -624,9 +627,11 @@ assign result_qual = {32{op_qual[`OP_ADD]}} & {{16{add_result_q[15]}}, add_resul
 
 assign result_sign = result_qual[31];
 
-assign result_cvt_pre = result_qual[31] ? ~result_qual + 32'b1 : result_qual;
-assign result_cvt_pre_en = fsme_next_idle;
-dflip_en #(32) result_ff (.clk(clk), .rst(rst), .en(result_cvt_pre_en), .d(result_cvt_pre), .q(result_cvt_pre_q));
+assign int_result_cvt_pre = result_qual[31] ? ~result_qual + 32'b1 : result_qual;
+
+dflip_en #(32) int_result_ff  (.clk(clk), .rst(rst), .en(exe_done), .d(int_result_cvt_pre), .q(int_result_cvt_pre_q));
+dflip_en #(32) frac_result_ff (.clk(clk), .rst(rst), .en(exe_done), .d(frac_dec_qual),      .q(frac_dec_qual_q));
+
 
 //overflow checking
 wire div_overflow;
@@ -635,7 +640,7 @@ assign overflow = 0;//mul_overflow;
 assign invld_result = invld_input | overflow | div_overflow;
 
 //Convert Stage
-assign cvt_cnt_rst = exe_pre_done;
+assign cvt_cnt_rst = exe_done;
 assign cvt_cnt_en = fsmc_in_convert | cvt_cnt_rst;
 assign cvt_cnt = cvt_cnt_rst ? 5'b0000 : cvt_cnt_q + 4'b1;
 dflip_en #(5) cvt_cnt_ff (.clk(clk), .rst(rst), .en(cvt_cnt_en), .d(cvt_cnt), .q(cvt_cnt_q));
@@ -653,7 +658,7 @@ bin2decdigit u_bin2decdigit_for_int(
     .rst(rst),
     .bin2decdigit_init(bin2decdigit_init),
     .bin2decdigit_en(bin2decdigit_en),
-    .input_bin(result_cvt_pre_q),
+    .input_bin(int_result_cvt_pre_q),
     .output_dec(int_dec_digit)
 );
 
@@ -662,7 +667,7 @@ bin2decdigit u_bin2decdigit_for_frac(
     .rst(rst),
     .bin2decdigit_init(bin2decdigit_init),
     .bin2decdigit_en(bin2decdigit_en),
-    .input_bin(frac_dec_qual),
+    .input_bin(frac_dec_qual_q),
     .output_dec(frac_dec_digit)
 );
 
@@ -726,7 +731,6 @@ wire [39:0] frac_digits_for_display_adj;
 assign frac_digits_for_display_adj = {frac_digits_for_display[39:20], {5{4'ha}}};
 
 wire [39:0] frac_digits_for_display_shift_lead0;
-//assign frac_digits_for_display_shift_lead0 = frac_part_is0 ? {40'h00_0aaa_aaaa} : frac_digits_for_display_adj >> {lead0_num, 2'b00};
 assign frac_digits_for_display_shift_lead0 = frac_digits_for_display_adj >> {lead0_num, 2'b00};
 
 wire [39:0] frac_digits_for_display_align_non0int;
@@ -798,6 +802,7 @@ assign output_digit2_for_lv2 = output_digits_for_display_lv2[11:8];
 assign output_digit1_for_lv2 = output_digits_for_display_lv2[7:4];
 assign output_digit0_for_lv2 = output_digits_for_display_lv2[3:0];
 
+//Display stage
 assign int_stage_final = |int_digits_idx_is0[9:6] ? 3'b01 :
                          |int_digits_idx_is0[5:2] ? 3'b10 : 3'b11;
 

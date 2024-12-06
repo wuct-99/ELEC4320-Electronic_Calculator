@@ -284,8 +284,10 @@ dflip_en #(32) exp_fraction_dec_lv2_0_ff  (.clk(clk), .rst(rst), .en(cvt_lv2_en)
 dflip_en #(32) exp_fraction_dec_lv2_1_ff  (.clk(clk), .rst(rst), .en(cvt_lv2_en), .d(exp_fraction_dec_lv2_1 ), .q(exp_fraction_dec_lv2_1_q));
 dflip_en #(32) exp_fraction_dec_lv2_2_ff  (.clk(clk), .rst(rst), .en(cvt_lv2_en), .d(exp_fraction_dec_lv2_2 ), .q(exp_fraction_dec_lv2_2_q));
 
-assign exp_fraction_dec_lv3  = exp_fraction_dec_lv2_0_q + exp_fraction_dec_lv2_1_q + exp_fraction_dec_lv2_2_q;
-dflip_en #(32) exp_fraction_dec_lv3_2_ff  (.clk(clk), .rst(rst), .en(cvt_lv3_en), .d(exp_fraction_dec_lv3), .q(exp_fraction_dec));
+assign exp_fraction_dec_lv3  = exp_fraction_dec_lv2_0_q + exp_fraction_dec_lv2_1_q;
+dflip_en #(32) exp_fraction_dec_lv3_ff  (.clk(clk), .rst(rst), .en(cvt_lv3_en), .d(exp_fraction_dec_lv3), .q(exp_fraction_dec_lv3_q));
+
+assign exp_fraction_dec = exp_fraction_dec_lv3_q + exp_fraction_dec_lv2_2_q;
 
 wire input_is0;
 assign input_is0 = ~(|input_754);

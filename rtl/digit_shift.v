@@ -35,7 +35,7 @@ wire dec_digit_9t2_is0;
 wire dec_digit_9t1_is0;
 wire dec_digit_9t0_is0;
 
-assign dec_digit_9t9_is0   = ~(|input_dec[39:36]);
+assign dec_digit_9t9_is0 = ~(|input_dec[39:36]);
 assign dec_digit_9t8_is0 = ~(|input_dec[39:32]);
 assign dec_digit_9t7_is0 = ~(|input_dec[39:28]);
 assign dec_digit_9t6_is0 = ~(|input_dec[39:24]);
