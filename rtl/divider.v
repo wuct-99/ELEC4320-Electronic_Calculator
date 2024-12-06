@@ -31,6 +31,8 @@ wire [`FSMDIV_STATE_WIDTH-1:0] fsmdiv_next_state;
 wire fsmdiv_state_upd;
 
 wire exe_done;
+wire exe_done_d1;
+wire exe_done_d2;
 
 //FSMDIV
 assign fsmdiv_in_idle  = fsmdiv_curr_state[0];
@@ -41,7 +43,7 @@ assign fsmdiv_in_done  = fsmdiv_curr_state[3];
 assign fsmdiv_idle_to_init = fsmdiv_in_idle & div_start;
 assign fsmdiv_init_to_exe  = fsmdiv_in_init ;
 assign fsmdiv_exe_to_done  = fsmdiv_in_exe  & exe_done;
-assign fsmdiv_done_to_idle = fsmdiv_in_done ;
+assign fsmdiv_done_to_idle = fsmdiv_in_done & exe_done_d2;
 
 assign fsmdiv_next_state = {`FSMDIV_STATE_WIDTH{fsmdiv_idle_to_init}} & `FSMDIV_INIT |
                            {`FSMDIV_STATE_WIDTH{fsmdiv_init_to_exe }} & `FSMDIV_EXE  |
@@ -91,41 +93,32 @@ assign quotient_exp =  inputa_exp - inputb_exp + 8'd127;
 wire [31:0] quotient;
 wire [31:0] shift_divisor;
 
-assign shift_divisor = ~(|divisor[31:0]) ? 32'd0        :
-                       ~(|divisor[30:0]) ? divisor >> 5'd31:
-                       ~(|divisor[29:0]) ? divisor >> 5'd30:
-                       ~(|divisor[28:0]) ? divisor >> 5'd29:
-                       ~(|divisor[27:0]) ? divisor >> 5'd28:
-                       ~(|divisor[26:0]) ? divisor >> 5'd27:
-                       ~(|divisor[25:0]) ? divisor >> 5'd26:
-                       ~(|divisor[24:0]) ? divisor >> 5'd25:
-                       ~(|divisor[23:0]) ? divisor >> 5'd24:
-                       ~(|divisor[22:0]) ? divisor >> 5'd23:
-                       ~(|divisor[21:0]) ? divisor >> 5'd22:
-                       ~(|divisor[20:0]) ? divisor >> 5'd21:
-                       ~(|divisor[19:0]) ? divisor >> 5'd20:
-                       ~(|divisor[18:0]) ? divisor >> 5'd19:
-                       ~(|divisor[17:0]) ? divisor >> 5'd18:
-                       ~(|divisor[16:0]) ? divisor >> 5'd17:
-                       ~(|divisor[15:0]) ? divisor >> 5'd16:
-                       ~(|divisor[14:0]) ? divisor >> 5'd15:
-                       ~(|divisor[13:0]) ? divisor >> 5'd14:
-                       ~(|divisor[12:0]) ? divisor >> 5'd13:
-                       ~(|divisor[11:0]) ? divisor >> 5'd12:
-                       ~(|divisor[10:0]) ? divisor >> 5'd11:
-                       ~(|divisor[9:0])  ? divisor >> 5'd10:
-                       ~(|divisor[8:0])  ? divisor >> 5'd9 :
-                       ~(|divisor[7:0])  ? divisor >> 5'd8 :
-                       ~(|divisor[6:0])  ? divisor >> 5'd7 :
-                       ~(|divisor[5:0])  ? divisor >> 5'd6 :
-                       ~(|divisor[4:0])  ? divisor >> 5'd5 :
-                       ~(|divisor[3:0])  ? divisor >> 5'd4 :
-                       ~(|divisor[2:0])  ? divisor >> 5'd3 :
-                       ~(|divisor[1:0])  ? divisor >> 5'd2 :
-                       ~(|divisor[0])    ? divisor >> 5'd1 : divisor;
+assign shift_divisor = ~(|divisor[31:0]) ? 32'b0                   :
+                       ~(|divisor[30:0]) ? {31'b0, divisor[31]   } :
+                       ~(|divisor[29:0]) ? {30'b0, divisor[31:30]} :
+                       ~(|divisor[28:0]) ? {29'b0, divisor[31:29]} :
+                       ~(|divisor[27:0]) ? {28'b0, divisor[31:28]} :
+                       ~(|divisor[26:0]) ? {27'b0, divisor[31:27]} :
+                       ~(|divisor[25:0]) ? {26'b0, divisor[31:26]} :
+                       ~(|divisor[24:0]) ? {25'b0, divisor[31:25]} :
+                       ~(|divisor[23:0]) ? {24'b0, divisor[31:24]} :
+                       ~(|divisor[22:0]) ? {23'b0, divisor[31:23]} :
+                       ~(|divisor[21:0]) ? {22'b0, divisor[31:22]} :
+                       ~(|divisor[20:0]) ? {21'b0, divisor[31:21]} :
+                       ~(|divisor[19:0]) ? {20'b0, divisor[31:20]} :
+                       ~(|divisor[18:0]) ? {19'b0, divisor[31:19]} :
+                       ~(|divisor[17:0]) ? {18'b0, divisor[31:18]} :
+                       ~(|divisor[16:0]) ? {17'b0, divisor[31:17]} :
+                       ~(|divisor[15:0]) ? {16'b0, divisor[31:16]} :
+                       ~(|divisor[14:0]) ? {15'b0, divisor[31:15]} :
+                       ~(|divisor[13:0]) ? {14'b0, divisor[31:14]} :
+                       ~(|divisor[12:0]) ? {13'b0, divisor[31:13]} :
+                       ~(|divisor[11:0]) ? {12'b0, divisor[31:12]} :
+                       ~(|divisor[10:0]) ? {11'b0, divisor[31:11]} :
+                       ~(|divisor[9:0])  ? {10'b0, divisor[31:10]} :
+                       ~(|divisor[8:0])  ? { 9'b0, divisor[31:9 ]} : { 8'b0, divisor[31:8 ]};
 
 
-//assign quotient = dividend / shift_divisor;
 wire [7:0] quotient_exp_q;
 wire [31:0] divisor_q;
 wire [31:0] dividend_q;
@@ -135,7 +128,7 @@ wire init_en;
 assign init_en = fsmdiv_in_init;
 dflip_en #(8)  quotient_exp_ff (.clk(clk), .rst(rst), .en(init_en), .d(quotient_exp), .q(quotient_exp_q));
 dflip_en #(32) dividend_ff (.clk(clk), .rst(rst), .en(init_en), .d(dividend), .q(dividend_q));
-dflip_en #(32) divisr_ff (.clk(clk), .rst(rst), .en(init_en), .d(divisor), .q(divisor_q));
+dflip_en #(32) divisor_ff (.clk(clk), .rst(rst), .en(init_en), .d(divisor), .q(divisor_q));
 dflip_en #(32) shift_divisr_ff (.clk(clk), .rst(rst), .en(init_en), .d(shift_divisor), .q(shift_divisor_q));
 
 //Divider Counter
@@ -167,107 +160,114 @@ assign exe_en = fsmdiv_in_exe;
 dflip_en #(64) acc_ff (.clk(clk), .rst(rst), .en(exe_en), .d(acc), .q(acc_q));
 dflip_en #(32) quotient_ff (.clk(clk), .rst(rst), .en(exe_en), .d(quotient), .q(quotient_q)); 
 
-//
+
+dflip #(1) exe_done_d1_ff (.clk(clk), .rst(rst), .d(exe_done), .q(exe_done_d1)); 
+dflip #(1) exe_done_d2_ff (.clk(clk), .rst(rst), .d(exe_done_d1), .q(exe_done_d2)); 
+
 wire [31:0] shift_quotient;
-assign shift_quotient = ~(|divisor_q[30:0]) ? quotient <<  5'd0 :
-                        ~(|divisor_q[29:0]) ? quotient <<  5'd1 :
-                        ~(|divisor_q[28:0]) ? quotient <<  5'd2 :
-                        ~(|divisor_q[27:0]) ? quotient <<  5'd3 :
-                        ~(|divisor_q[26:0]) ? quotient <<  5'd4 :
-                        ~(|divisor_q[25:0]) ? quotient <<  5'd5 :
-                        ~(|divisor_q[24:0]) ? quotient <<  5'd6 :
-                        ~(|divisor_q[23:0]) ? quotient <<  5'd7 :
-                        ~(|divisor_q[22:0]) ? quotient <<  5'd8 :
-                        ~(|divisor_q[21:0]) ? quotient <<  5'd9 :
-                        ~(|divisor_q[20:0]) ? quotient <<  5'd10:
-                        ~(|divisor_q[19:0]) ? quotient <<  5'd11:
-                        ~(|divisor_q[18:0]) ? quotient <<  5'd12:
-                        ~(|divisor_q[17:0]) ? quotient <<  5'd13:
-                        ~(|divisor_q[16:0]) ? quotient <<  5'd14:
-                        ~(|divisor_q[15:0]) ? quotient <<  5'd15:
-                        ~(|divisor_q[14:0]) ? quotient <<  5'd16:
-                        ~(|divisor_q[13:0]) ? quotient <<  5'd17:
-                        ~(|divisor_q[12:0]) ? quotient <<  5'd18:
-                        ~(|divisor_q[11:0]) ? quotient <<  5'd19:
-                        ~(|divisor_q[10:0]) ? quotient <<  5'd20: 
-                        ~(|divisor_q[9:0 ]) ? quotient <<  5'd21: 
-                        ~(|divisor_q[8:0 ]) ? quotient <<  5'd22: 
-                        ~(|divisor_q[7:0 ]) ? quotient <<  5'd23: 
-                        ~(|divisor_q[6:0 ]) ? quotient <<  5'd24: 
-                        ~(|divisor_q[5:0 ]) ? quotient <<  5'd25: 
-                        ~(|divisor_q[4:0 ]) ? quotient <<  5'd26: 
-                        ~(|divisor_q[3:0 ]) ? quotient <<  5'd27: 
-                        ~(|divisor_q[2:0 ]) ? quotient <<  5'd28: 
-                        ~(|divisor_q[1:0 ]) ? quotient <<  5'd29: 
-                        ~(|divisor_q[0   ]) ? quotient <<  5'd30: quotient;
+wire [31:0] shift_quotient_q;
+assign shift_quotient = ~(|divisor_q[30:0]) ? quotient           :
+                        ~(|divisor_q[29:0]) ? {quotient,  1'b0 } :
+                        ~(|divisor_q[28:0]) ? {quotient,  2'b0 } :
+                        ~(|divisor_q[27:0]) ? {quotient,  3'b0 } :
+                        ~(|divisor_q[26:0]) ? {quotient,  4'b0 } :
+                        ~(|divisor_q[25:0]) ? {quotient,  5'b0 } :
+                        ~(|divisor_q[24:0]) ? {quotient,  6'b0 } :
+                        ~(|divisor_q[23:0]) ? {quotient,  7'b0 } :
+                        ~(|divisor_q[22:0]) ? {quotient,  8'b0 } :
+                        ~(|divisor_q[21:0]) ? {quotient,  9'b0 } :
+                        ~(|divisor_q[20:0]) ? {quotient, 10'b0 } :
+                        ~(|divisor_q[19:0]) ? {quotient, 11'b0 } :
+                        ~(|divisor_q[18:0]) ? {quotient, 12'b0 } :
+                        ~(|divisor_q[17:0]) ? {quotient, 13'b0 } :
+                        ~(|divisor_q[16:0]) ? {quotient, 14'b0 } :
+                        ~(|divisor_q[15:0]) ? {quotient, 15'b0 } :
+                        ~(|divisor_q[14:0]) ? {quotient, 16'b0 } :
+                        ~(|divisor_q[13:0]) ? {quotient, 17'b0 } :
+                        ~(|divisor_q[12:0]) ? {quotient, 18'b0 } :
+                        ~(|divisor_q[11:0]) ? {quotient, 19'b0 } :
+                        ~(|divisor_q[10:0]) ? {quotient, 20'b0 } : 
+                        ~(|divisor_q[9:0 ]) ? {quotient, 21'b0 } : 
+                        ~(|divisor_q[8:0 ]) ? {quotient, 22'b0 } : 
+                        ~(|divisor_q[7:0 ]) ? {quotient, 23'b0 } : 
+                        ~(|divisor_q[6:0 ]) ? {quotient, 24'b0 } : 
+                        ~(|divisor_q[5:0 ]) ? {quotient, 25'b0 } : 
+                        ~(|divisor_q[4:0 ]) ? {quotient, 26'b0 } : 
+                        ~(|divisor_q[3:0 ]) ? {quotient, 27'b0 } : 
+                        ~(|divisor_q[2:0 ]) ? {quotient, 28'b0 } : 
+                        ~(|divisor_q[1:0 ]) ? {quotient, 29'b0 } : 
+                        ~(|divisor_q[0   ]) ? {quotient, 30'b0 } : quotient;
+
+dflip_en #(32) shift_quotient_ff (.clk(clk), .rst(rst), .en(exe_done_d1), .d(shift_quotient), .q(shift_quotient_q)); 
+
 //step 6
 wire [31:0] norm_quotient;
-assign norm_quotient = ~(|shift_quotient[31:0 ]) ? 32'd0                   :
-                       ~(|shift_quotient[31:1 ]) ? shift_quotient << 5'd31 :
-                       ~(|shift_quotient[31:2 ]) ? shift_quotient << 5'd30 :
-                       ~(|shift_quotient[31:3 ]) ? shift_quotient << 5'd29 :
-                       ~(|shift_quotient[31:4 ]) ? shift_quotient << 5'd28 :
-                       ~(|shift_quotient[31:5 ]) ? shift_quotient << 5'd27 :
-                       ~(|shift_quotient[31:6 ]) ? shift_quotient << 5'd26 :
-                       ~(|shift_quotient[31:7 ]) ? shift_quotient << 5'd25 :
-                       ~(|shift_quotient[31:8 ]) ? shift_quotient << 5'd24 :
-                       ~(|shift_quotient[31:9 ]) ? shift_quotient << 5'd23 :
-                       ~(|shift_quotient[31:10]) ? shift_quotient << 5'd22 :
-                       ~(|shift_quotient[31:11]) ? shift_quotient << 5'd21 :
-                       ~(|shift_quotient[31:12]) ? shift_quotient << 5'd20 :
-                       ~(|shift_quotient[31:13]) ? shift_quotient << 5'd19 :
-                       ~(|shift_quotient[31:14]) ? shift_quotient << 5'd18 :
-                       ~(|shift_quotient[31:15]) ? shift_quotient << 5'd17 :
-                       ~(|shift_quotient[31:16]) ? shift_quotient << 5'd16 :
-                       ~(|shift_quotient[31:17]) ? shift_quotient << 5'd15 :
-                       ~(|shift_quotient[31:18]) ? shift_quotient << 5'd14 :
-                       ~(|shift_quotient[31:19]) ? shift_quotient << 5'd13 :
-                       ~(|shift_quotient[31:20]) ? shift_quotient << 5'd12 :
-                       ~(|shift_quotient[31:21]) ? shift_quotient << 5'd11 :
-                       ~(|shift_quotient[31:22]) ? shift_quotient << 5'd10 :
-                       ~(|shift_quotient[31:23]) ? shift_quotient << 5'd9  :
-                       ~(|shift_quotient[31:24]) ? shift_quotient << 5'd8  :
-                       ~(|shift_quotient[31:25]) ? shift_quotient << 5'd7  :
-                       ~(|shift_quotient[31:26]) ? shift_quotient << 5'd6  :
-                       ~(|shift_quotient[31:27]) ? shift_quotient << 5'd5  :
-                       ~(|shift_quotient[31:28]) ? shift_quotient << 5'd4  :
-                       ~(|shift_quotient[31:29]) ? shift_quotient << 5'd3  :
-                       ~(|shift_quotient[31:30]) ? shift_quotient << 5'd2  :
-                       ~(|shift_quotient[31   ]) ? shift_quotient << 5'd1  : shift_quotient ;
+assign norm_quotient = ~(|shift_quotient_q[31:0 ]) ? 32'd0                  :
+                       ~(|shift_quotient_q[31:1 ]) ? {shift_quotient_q, 31'b0} :
+                       ~(|shift_quotient_q[31:2 ]) ? {shift_quotient_q, 30'b0} :
+                       ~(|shift_quotient_q[31:3 ]) ? {shift_quotient_q, 29'b0} :
+                       ~(|shift_quotient_q[31:4 ]) ? {shift_quotient_q, 28'b0} :
+                       ~(|shift_quotient_q[31:5 ]) ? {shift_quotient_q, 27'b0} :
+                       ~(|shift_quotient_q[31:6 ]) ? {shift_quotient_q, 26'b0} :
+                       ~(|shift_quotient_q[31:7 ]) ? {shift_quotient_q, 25'b0} :
+                       ~(|shift_quotient_q[31:8 ]) ? {shift_quotient_q, 24'b0} :
+                       ~(|shift_quotient_q[31:9 ]) ? {shift_quotient_q, 23'b0} :
+                       ~(|shift_quotient_q[31:10]) ? {shift_quotient_q, 22'b0} :
+                       ~(|shift_quotient_q[31:11]) ? {shift_quotient_q, 21'b0} :
+                       ~(|shift_quotient_q[31:12]) ? {shift_quotient_q, 20'b0} :
+                       ~(|shift_quotient_q[31:13]) ? {shift_quotient_q, 19'b0} :
+                       ~(|shift_quotient_q[31:14]) ? {shift_quotient_q, 18'b0} :
+                       ~(|shift_quotient_q[31:15]) ? {shift_quotient_q, 17'b0} :
+                       ~(|shift_quotient_q[31:16]) ? {shift_quotient_q, 16'b0} :
+                       ~(|shift_quotient_q[31:17]) ? {shift_quotient_q, 15'b0} :
+                       ~(|shift_quotient_q[31:18]) ? {shift_quotient_q, 14'b0} :
+                       ~(|shift_quotient_q[31:19]) ? {shift_quotient_q, 13'b0} :
+                       ~(|shift_quotient_q[31:20]) ? {shift_quotient_q, 12'b0} :
+                       ~(|shift_quotient_q[31:21]) ? {shift_quotient_q, 11'b0} :
+                       ~(|shift_quotient_q[31:22]) ? {shift_quotient_q, 10'b0} :
+                       ~(|shift_quotient_q[31:23]) ? {shift_quotient_q, 9 'b0} :
+                       ~(|shift_quotient_q[31:24]) ? {shift_quotient_q, 8 'b0} :
+                       ~(|shift_quotient_q[31:25]) ? {shift_quotient_q, 7 'b0} :
+                       ~(|shift_quotient_q[31:26]) ? {shift_quotient_q, 6 'b0} :
+                       ~(|shift_quotient_q[31:27]) ? {shift_quotient_q, 5 'b0} :
+                       ~(|shift_quotient_q[31:28]) ? {shift_quotient_q, 4 'b0} :
+                       ~(|shift_quotient_q[31:29]) ? {shift_quotient_q, 3 'b0} :
+                       ~(|shift_quotient_q[31:30]) ? {shift_quotient_q, 2 'b0} :
+                       ~(|shift_quotient_q[31   ]) ? {shift_quotient_q, 1 'b0} : shift_quotient_q ;
 
 wire [7:0] norm_quotient_bias;
-assign norm_quotient_bias = ~(|shift_quotient[31:0 ])  ? quotient_exp_q - 8'd32 :
-                            ~(|shift_quotient[31:1 ])  ? quotient_exp_q - 8'd31 :
-                            ~(|shift_quotient[31:2 ])  ? quotient_exp_q - 8'd30 :
-                            ~(|shift_quotient[31:3 ])  ? quotient_exp_q - 8'd29 :
-                            ~(|shift_quotient[31:4 ])  ? quotient_exp_q - 8'd28 :
-                            ~(|shift_quotient[31:5 ])  ? quotient_exp_q - 8'd27 :
-                            ~(|shift_quotient[31:6 ])  ? quotient_exp_q - 8'd26 :
-                            ~(|shift_quotient[31:7 ])  ? quotient_exp_q - 8'd25 :
-                            ~(|shift_quotient[31:8 ])  ? quotient_exp_q - 8'd24 :
-                            ~(|shift_quotient[31:9 ])  ? quotient_exp_q - 8'd23 :
-                            ~(|shift_quotient[31:10])  ? quotient_exp_q - 8'd22 :
-                            ~(|shift_quotient[31:11])  ? quotient_exp_q - 8'd21 :
-                            ~(|shift_quotient[31:12])  ? quotient_exp_q - 8'd20 :
-                            ~(|shift_quotient[31:13])  ? quotient_exp_q - 8'd19 :
-                            ~(|shift_quotient[31:14])  ? quotient_exp_q - 8'd18 :
-                            ~(|shift_quotient[31:15])  ? quotient_exp_q - 8'd17 :
-                            ~(|shift_quotient[31:16])  ? quotient_exp_q - 8'd16 :
-                            ~(|shift_quotient[31:17])  ? quotient_exp_q - 8'd15 :
-                            ~(|shift_quotient[31:18])  ? quotient_exp_q - 8'd14 :
-                            ~(|shift_quotient[31:19])  ? quotient_exp_q - 8'd13 :
-                            ~(|shift_quotient[31:20])  ? quotient_exp_q - 8'd12 :
-                            ~(|shift_quotient[31:21])  ? quotient_exp_q - 8'd11 :
-                            ~(|shift_quotient[31:22])  ? quotient_exp_q - 8'd10 :
-                            ~(|shift_quotient[31:23])  ? quotient_exp_q - 8'd9  :
-                            ~(|shift_quotient[31:24])  ? quotient_exp_q - 8'd8  :
-                            ~(|shift_quotient[31:25])  ? quotient_exp_q - 8'd7  :
-                            ~(|shift_quotient[31:26])  ? quotient_exp_q - 8'd6  :
-                            ~(|shift_quotient[31:27])  ? quotient_exp_q - 8'd5  :
-                            ~(|shift_quotient[31:28])  ? quotient_exp_q - 8'd4  :
-                            ~(|shift_quotient[31:29])  ? quotient_exp_q - 8'd3  :
-                            ~(|shift_quotient[31:30])  ? quotient_exp_q - 8'd2  :
-                            ~(|shift_quotient[31   ])  ? quotient_exp_q - 8'd1  : quotient_exp_q;
+assign norm_quotient_bias = ~(|shift_quotient_q[31:0 ])  ? quotient_exp_q - 8'd32 :
+                            ~(|shift_quotient_q[31:1 ])  ? quotient_exp_q - 8'd31 :
+                            ~(|shift_quotient_q[31:2 ])  ? quotient_exp_q - 8'd30 :
+                            ~(|shift_quotient_q[31:3 ])  ? quotient_exp_q - 8'd29 :
+                            ~(|shift_quotient_q[31:4 ])  ? quotient_exp_q - 8'd28 :
+                            ~(|shift_quotient_q[31:5 ])  ? quotient_exp_q - 8'd27 :
+                            ~(|shift_quotient_q[31:6 ])  ? quotient_exp_q - 8'd26 :
+                            ~(|shift_quotient_q[31:7 ])  ? quotient_exp_q - 8'd25 :
+                            ~(|shift_quotient_q[31:8 ])  ? quotient_exp_q - 8'd24 :
+                            ~(|shift_quotient_q[31:9 ])  ? quotient_exp_q - 8'd23 :
+                            ~(|shift_quotient_q[31:10])  ? quotient_exp_q - 8'd22 :
+                            ~(|shift_quotient_q[31:11])  ? quotient_exp_q - 8'd21 :
+                            ~(|shift_quotient_q[31:12])  ? quotient_exp_q - 8'd20 :
+                            ~(|shift_quotient_q[31:13])  ? quotient_exp_q - 8'd19 :
+                            ~(|shift_quotient_q[31:14])  ? quotient_exp_q - 8'd18 :
+                            ~(|shift_quotient_q[31:15])  ? quotient_exp_q - 8'd17 :
+                            ~(|shift_quotient_q[31:16])  ? quotient_exp_q - 8'd16 :
+                            ~(|shift_quotient_q[31:17])  ? quotient_exp_q - 8'd15 :
+                            ~(|shift_quotient_q[31:18])  ? quotient_exp_q - 8'd14 :
+                            ~(|shift_quotient_q[31:19])  ? quotient_exp_q - 8'd13 :
+                            ~(|shift_quotient_q[31:20])  ? quotient_exp_q - 8'd12 :
+                            ~(|shift_quotient_q[31:21])  ? quotient_exp_q - 8'd11 :
+                            ~(|shift_quotient_q[31:22])  ? quotient_exp_q - 8'd10 :
+                            ~(|shift_quotient_q[31:23])  ? quotient_exp_q - 8'd9  :
+                            ~(|shift_quotient_q[31:24])  ? quotient_exp_q - 8'd8  :
+                            ~(|shift_quotient_q[31:25])  ? quotient_exp_q - 8'd7  :
+                            ~(|shift_quotient_q[31:26])  ? quotient_exp_q - 8'd6  :
+                            ~(|shift_quotient_q[31:27])  ? quotient_exp_q - 8'd5  :
+                            ~(|shift_quotient_q[31:28])  ? quotient_exp_q - 8'd4  :
+                            ~(|shift_quotient_q[31:29])  ? quotient_exp_q - 8'd3  :
+                            ~(|shift_quotient_q[31:30])  ? quotient_exp_q - 8'd2  :
+                            ~(|shift_quotient_q[31   ])  ? quotient_exp_q - 8'd1  : quotient_exp_q;
 
 wire [31:0] div_result_754_pre;
 assign div_result_754_pre[31] = (inputa_sign_754 ^ inputb_sign_754);
@@ -277,10 +277,8 @@ assign div_result_754_pre[22:0] = norm_quotient[7] ? norm_quotient[30:8] + 23'b1
 wire [31:0] div_result_754_qual;
 assign div_result_754_qual = ~(|inputa_754) ? 32'b0: div_result_754_pre;
 
-wire div_pre_done;
-assign div_pre_done = fsmdiv_in_done;
-dflip_en #(32) div_result_ff (.clk(clk), .rst(rst), .en(div_pre_done), .d(div_result_754_qual), .q(div_result_754)); 
-dflip #(1) div_done_ff (.clk(clk), .rst(rst), .d(div_pre_done), .q(div_done)); 
-
+//assign div_pre_done = fsmdiv_in_done;
+dflip_en #(32) div_result_ff (.clk(clk), .rst(rst), .en(exe_done_d2), .d(div_result_754_qual), .q(div_result_754)); 
+dflip #(1) div_done_ff (.clk(clk), .rst(rst), .d(exe_done_d2), .q(div_done)); 
 
 endmodule;

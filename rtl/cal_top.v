@@ -619,7 +619,7 @@ assign result_qual = {32{op_qual[`OP_ADD]}} & {{16{add_result_q[15]}}, add_resul
                      {32{op_qual[`OP_MUL]}} & mul_result_q                         |
                      {32{op_qual[`OP_DIV]}} & int_dec_qual                         ;
 
-assign result_sign = result_qual[31]; //FIXME for fraction
+assign result_sign = op_qual[`OP_DIV] ? div_result_754[31] : result_qual[31]; //FIXME for fraction
 
 assign int_result_cvt_pre = result_qual[31] ? ~result_qual + 32'b1 : result_qual;
 
