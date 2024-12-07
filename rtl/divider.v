@@ -190,15 +190,7 @@ assign shift_quotient = ~(|divisor_q[30:0]) ? quotient           :
                         ~(|divisor_q[11:0]) ? {quotient, 19'b0 } :
                         ~(|divisor_q[10:0]) ? {quotient, 20'b0 } : 
                         ~(|divisor_q[9:0 ]) ? {quotient, 21'b0 } : 
-                        ~(|divisor_q[8:0 ]) ? {quotient, 22'b0 } : 
-                        ~(|divisor_q[7:0 ]) ? {quotient, 23'b0 } : 
-                        ~(|divisor_q[6:0 ]) ? {quotient, 24'b0 } : 
-                        ~(|divisor_q[5:0 ]) ? {quotient, 25'b0 } : 
-                        ~(|divisor_q[4:0 ]) ? {quotient, 26'b0 } : 
-                        ~(|divisor_q[3:0 ]) ? {quotient, 27'b0 } : 
-                        ~(|divisor_q[2:0 ]) ? {quotient, 28'b0 } : 
-                        ~(|divisor_q[1:0 ]) ? {quotient, 29'b0 } : 
-                        ~(|divisor_q[0   ]) ? {quotient, 30'b0 } : quotient;
+                        ~(|divisor_q[8:0 ]) ? {quotient, 22'b0 } : quotient;
 
 dflip_en #(32) shift_quotient_ff (.clk(clk), .rst(rst), .en(exe_done_d1), .d(shift_quotient), .q(shift_quotient_q)); 
 
