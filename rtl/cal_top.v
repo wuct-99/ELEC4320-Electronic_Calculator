@@ -637,8 +637,8 @@ frac2int u_frac2int(
 //result
 assign result_qual = {32{op_qual_lv1[`OP_ADD]}} & {{16{add_result_q[15]}}, add_result_q} |
                      {32{op_qual_lv1[`OP_SUB]}} & {{16{sub_result_q[15]}}, sub_result_q} |
-                     {32{op_qual_lv1[`OP_MUL]}} & mul_result_q                         |
-                     {32{op_qual_lv1[`OP_DIV]}} & int_dec_qual                         ;
+                     {32{op_qual_lv1[`OP_MUL]}} & mul_result_q                           |
+                     {32{op_qual_lv1[`OP_DIV]}} & int_dec_qual                           ;
 
 assign result_sign = op_qual_lv1[`OP_DIV] ? div_result_754[31] : result_qual[31]; //FIXME for fraction
 

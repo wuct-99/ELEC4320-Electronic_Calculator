@@ -39,10 +39,8 @@ wire [`RESULT_WIDTH-1:0] digit2_sl2;
 
 wire [`RESULT_WIDTH-1:0] lv1_0;
 wire [`RESULT_WIDTH-1:0] lv1_1;
-wire [`RESULT_WIDTH-1:0] lv1_2;
 wire [`RESULT_WIDTH-1:0] lv1_0_q;
 wire [`RESULT_WIDTH-1:0] lv1_1_q;
-wire [`RESULT_WIDTH-1:0] lv1_2_q;
 wire [`RESULT_WIDTH-1:0] lv2;
 wire [`RESULT_WIDTH-1:0] lv3;
 wire [31:0] lv4;
@@ -64,15 +62,12 @@ assign digit2_sl6 = {6'b0 , digit2, 6'b0};
 assign digit2_sl5 = {7'b0 , digit2, 5'b0};
 assign digit2_sl2 = {10'b0, digit2, 2'b0};
 //Lv1
-assign lv1_0 = digit1_sl3 + digit1_sl1;
-assign lv1_1 = digit2_sl6 + digit2_sl5;
-assign lv1_2 = digit0_sl0 + digit2_sl2;
+assign lv1_0 = digit1_sl3 + digit1_sl1 + digit0_sl0;
+assign lv1_1 = digit2_sl6 + digit2_sl5 + digit2_sl2;
 dflip_en #(`RESULT_WIDTH) lv1_0_ff (.clk(clk), .rst(rst), .en(init_lv1_en), .d(lv1_0), .q(lv1_0_q));
 dflip_en #(`RESULT_WIDTH) lv1_1_ff (.clk(clk), .rst(rst), .en(init_lv1_en), .d(lv1_1), .q(lv1_1_q));
-dflip_en #(`RESULT_WIDTH) lv1_2_ff (.clk(clk), .rst(rst), .en(init_lv1_en), .d(lv1_2), .q(lv1_2_q));
-
 //Lv2
-assign lv2 = lv1_0_q + lv1_1_q + lv1_2_q;
+assign lv2 = lv1_0_q + lv1_1_q;
 dflip_en #(`RESULT_WIDTH) a_lv2_ff   (.clk(clk), .rst(rst), .en(init_lv2_en), .d(lv2), .q(unsign_dec));
 
 //Lv3

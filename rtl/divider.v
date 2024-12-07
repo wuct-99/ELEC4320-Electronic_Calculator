@@ -147,11 +147,11 @@ wire [63:0] acc_q;
 wire [31:0] shift_quo;
 wire [31:0] quotient_q;
 
-assign shift_acc = div_cnt_q == 0 ? {31'b0, dividend_q[31:0], 1'b0} : acc_q << 1'b1;
+assign shift_acc = ~(|div_cnt_q) ? {31'b0, dividend_q[31:0], 1'b0} : {acc_q[62:0], 1'b0};
 assign acc[63:32] = shift_acc[63:32] >= shift_divisor_q ? shift_acc[63:32] - shift_divisor_q : shift_acc[63:32];
 assign acc[31:0] = shift_acc[31:0];
 
-assign shift_quo = quotient_q << 1'b1; 
+assign shift_quo = {quotient_q[30:0], 1'b0}; 
 assign quotient[31:1] = shift_quo[31:1];
 assign quotient[0] = shift_acc[63:32] >= shift_divisor_q;
 
