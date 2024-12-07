@@ -296,8 +296,8 @@ assign exp_fraction_dec_lv3_0[31:16]                          = exp_fraction_dec
 dflip_en #(32) exp_fraction_dec_lv3_0_ff  (.clk(clk), .rst(rst), .en(cvt_lv3_en), .d(exp_fraction_dec_lv3_0), .q(exp_fraction_dec_lv3_0_q));
 dflip_en #(1)  exp_fraction_dec_lv3_1_ff  (.clk(clk), .rst(rst), .en(cvt_lv3_en), .d(exp_fraction_dec_lv3_1), .q(exp_fraction_dec_lv3_1_q));
 
-assign exp_fraction_dec_lv4 = exp_fraction_dec_lv3_0_q + {15'b0, exp_fraction_dec_lv3_1_q, 16'b0};
-
+assign exp_fraction_dec_lv4[31:16] = exp_fraction_dec_lv3_0_q[31:16] + {15'b0, exp_fraction_dec_lv3_1_q};
+assign exp_fraction_dec_lv4[15:0]  = exp_fraction_dec_lv3_0_q[15:0];
 
 dflip_en #(32) exp_fraction_dec_lv4_ff  (.clk(clk), .rst(rst), .en(cvt_lv4_en), .d(exp_fraction_dec_lv4), .q(exp_fraction_dec_lv4_q));
 
