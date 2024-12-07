@@ -96,6 +96,8 @@ wire cvt_lv2_en;
 wire cvt_lv3_en;
 wire cvt_lv4_en;
 wire cvt_lv5_en;
+wire cvt_lv6_en;
+wire cvt_lv7_en;
 
 dflip #(1) cvt_lv0_en_ff (.clk(clk), .rst(rst), .d(frac2int_start), .q(cvt_lv0_en   ));
 dflip #(1) cvt_lv1_en_ff (.clk(clk), .rst(rst), .d(cvt_lv0_en    ), .q(cvt_lv1_en   ));
@@ -103,7 +105,9 @@ dflip #(1) cvt_lv2_en_ff (.clk(clk), .rst(rst), .d(cvt_lv1_en    ), .q(cvt_lv2_e
 dflip #(1) cvt_lv3_en_ff (.clk(clk), .rst(rst), .d(cvt_lv2_en    ), .q(cvt_lv3_en   ));
 dflip #(1) cvt_lv4_en_ff (.clk(clk), .rst(rst), .d(cvt_lv3_en    ), .q(cvt_lv4_en   ));
 dflip #(1) cvt_lv5_en_ff (.clk(clk), .rst(rst), .d(cvt_lv4_en    ), .q(cvt_lv5_en   ));
-dflip #(1) cvt_lv6_en_ff (.clk(clk), .rst(rst), .d(cvt_lv5_en    ), .q(frac2int_done));
+dflip #(1) cvt_lv6_en_ff (.clk(clk), .rst(rst), .d(cvt_lv5_en    ), .q(cvt_lv6_en   ));
+dflip #(1) cvt_lv7_en_ff (.clk(clk), .rst(rst), .d(cvt_lv6_en    ), .q(cvt_lv7_en   ));
+dflip #(1) cvt_lv8_en_ff (.clk(clk), .rst(rst), .d(cvt_lv7_en    ), .q(frac2int_done));
 
 wire [31:0] integer_part_dec_pre;
 wire [31:0] integer_part_dec;
@@ -304,29 +308,114 @@ dflip_en #(32) exp_fraction_dec_lv4_ff  (.clk(clk), .rst(rst), .en(cvt_lv4_en), 
 wire [31:0] fraction_dec_qual_lv5;
 assign fraction_dec_qual_lv5 = input_is0 ? 32'b0 : exp_fraction_dec_lv4_q;
 
-wire signed [31:0] frac_dec_0;
-wire signed [31:0] frac_dec_1;
-wire signed [31:0] frac_dec_2;
-wire signed [31:0] frac_dec_3;
-wire signed [31:0] frac_dec_4;
-wire signed [31:0] frac_dec_5;
 
-assign frac_dec_0 = fraction_dec_qual_lv5 - 32'd1_0000_0000;
-assign frac_dec_1 = fraction_dec_qual_lv5 - 32'd0_1000_0000;
-assign frac_dec_2 = fraction_dec_qual_lv5 - 32'd0_0100_0000;
-assign frac_dec_3 = fraction_dec_qual_lv5 - 32'd0_0010_0000;
-assign frac_dec_4 = fraction_dec_qual_lv5 - 32'd0_0001_0000;
-assign frac_dec_5 = fraction_dec_qual_lv5 - 32'd0_0000_1000;
+wire signed [31:0] frac_dec_0_lv5;
+wire signed [31:0] frac_dec_1_lv5;
+wire signed [31:0] frac_dec_2_lv5;
+wire signed [31:0] frac_dec_3_lv5;
+wire signed [31:0] frac_dec_4_lv5;
+wire signed [31:0] frac_dec_5_lv5;
+wire frac_dec_0c_lv5;
+wire frac_dec_1c_lv5;
+wire frac_dec_2c_lv5;
+wire frac_dec_3c_lv5;
+wire frac_dec_4c_lv5;
+wire frac_dec_5c_lv5;
+wire signed [31:0] frac_dec_0_lv5_q;
+wire signed [31:0] frac_dec_1_lv5_q;
+wire signed [31:0] frac_dec_2_lv5_q;
+wire signed [31:0] frac_dec_3_lv5_q;
+wire signed [31:0] frac_dec_4_lv5_q;
+wire signed [31:0] frac_dec_5_lv5_q;
+wire frac_dec_0c_lv5_q;
+wire frac_dec_1c_lv5_q;
+wire frac_dec_2c_lv5_q;
+wire frac_dec_3c_lv5_q;
+wire frac_dec_4c_lv5_q;
+wire frac_dec_5c_lv5_q;
+//-1_0000_0000 
+assign {frac_dec_0c_lv5, frac_dec_0_lv5[15:0]} = fraction_dec_qual_lv5[15:0 ] + 16'h1F00;
+assign                   frac_dec_0_lv5[31:16] = fraction_dec_qual_lv5[31:16] + 16'hFA0A;
 
-wire [2:0] lead0_num_lv5;
-assign lead0_num_lv5 = frac_dec_0[31] & frac_dec_1[31] & frac_dec_2[31] & frac_dec_3[31] & frac_dec_4[31] & frac_dec_5[31] ? 3'd6 : 
-                       frac_dec_0[31] & frac_dec_1[31] & frac_dec_2[31] & frac_dec_3[31] & frac_dec_4[31]                  ? 3'd5 : 
-                       frac_dec_0[31] & frac_dec_1[31] & frac_dec_2[31] & frac_dec_3[31]                                   ? 3'd4 : 
-                       frac_dec_0[31] & frac_dec_1[31] & frac_dec_2[31]                                                    ? 3'd3 : 
-                       frac_dec_0[31] & frac_dec_1[31]                                                                     ? 3'd2 : 
-                       frac_dec_0[31]                                                                                      ? 3'd1 : 3'd0;
+//-1000_0000 'hFF67_6980
+assign {frac_dec_1c_lv5, frac_dec_1_lv5[15:0]} = fraction_dec_qual_lv5[15:0 ] + 16'h6980;
+assign                   frac_dec_1_lv5[31:16] = fraction_dec_qual_lv5[31:16] + 16'hFF67;
 
-dflip_en #(32) fraction_dec_qual_ff (.clk(clk), .rst(rst), .en(cvt_lv5_en), .d(fraction_dec_qual_lv5), .q(fraction_dec_qual));
-dflip_en #(3)  lead0_num_ff         (.clk(clk), .rst(rst), .en(cvt_lv5_en), .d(lead0_num_lv5        ), .q(lead0_num        ));
+//-100_0000 'hFFF0_BDC0
+assign {frac_dec_2c_lv5, frac_dec_2_lv5[15:0]} = fraction_dec_qual_lv5[15:0 ] + 16'hBDC0;
+assign                   frac_dec_2_lv5[31:16] = fraction_dec_qual_lv5[31:16] + 16'hFFF0;
+
+//-10_0000 'hFFFE_7960
+assign {frac_dec_3c_lv5, frac_dec_3_lv5[15:0]} = fraction_dec_qual_lv5[15:0 ] + 16'h7960;
+assign                   frac_dec_3_lv5[31:16] = fraction_dec_qual_lv5[31:16] + 16'hFFFE;
+
+//-1_0000 'hFFFF_D8F0
+assign {frac_dec_4c_lv5, frac_dec_4_lv5[15:0]} = fraction_dec_qual_lv5[15:0 ] + 16'hD8F0;
+assign                   frac_dec_4_lv5[31:16] = fraction_dec_qual_lv5[31:16] + 16'hFFFF;
+
+assign {frac_dec_5c_lv5, frac_dec_5_lv5[15:0]} = fraction_dec_qual_lv5[15:0 ] + 16'hD8F0;
+assign                   frac_dec_5_lv5[31:16] = fraction_dec_qual_lv5[31:16] + 16'hFFFF;
+
+dflip_en #(32) fraction_dec_qual_lv5_ff (.clk(clk), .rst(rst), .en(cvt_lv5_en), .d(fraction_dec_qual_lv5), .q(fraction_dec_qual));
+dflip_en #(32) frac_dec_0_lv5_ff    (.clk(clk), .rst(rst), .en(cvt_lv5_en), .d(frac_dec_0_lv5), .q(frac_dec_0_lv5_q));
+dflip_en #(32) frac_dec_1_lv5_ff    (.clk(clk), .rst(rst), .en(cvt_lv5_en), .d(frac_dec_1_lv5), .q(frac_dec_1_lv5_q));
+dflip_en #(32) frac_dec_2_lv5_ff    (.clk(clk), .rst(rst), .en(cvt_lv5_en), .d(frac_dec_2_lv5), .q(frac_dec_2_lv5_q));
+dflip_en #(32) frac_dec_3_lv5_ff    (.clk(clk), .rst(rst), .en(cvt_lv5_en), .d(frac_dec_3_lv5), .q(frac_dec_3_lv5_q));
+dflip_en #(32) frac_dec_4_lv5_ff    (.clk(clk), .rst(rst), .en(cvt_lv5_en), .d(frac_dec_4_lv5), .q(frac_dec_4_lv5_q));
+dflip_en #(32) frac_dec_5_lv5_ff    (.clk(clk), .rst(rst), .en(cvt_lv5_en), .d(frac_dec_5_lv5), .q(frac_dec_5_lv5_q));
+dflip_en #(1)  frac_dec_0c_lv5_ff   (.clk(clk), .rst(rst), .en(cvt_lv5_en), .d(frac_dec_0c_lv5), .q(frac_dec_0c_lv5_q));
+dflip_en #(1)  frac_dec_1c_lv5_ff   (.clk(clk), .rst(rst), .en(cvt_lv5_en), .d(frac_dec_1c_lv5), .q(frac_dec_1c_lv5_q));
+dflip_en #(1)  frac_dec_2c_lv5_ff   (.clk(clk), .rst(rst), .en(cvt_lv5_en), .d(frac_dec_2c_lv5), .q(frac_dec_2c_lv5_q));
+dflip_en #(1)  frac_dec_3c_lv5_ff   (.clk(clk), .rst(rst), .en(cvt_lv5_en), .d(frac_dec_3c_lv5), .q(frac_dec_3c_lv5_q));
+dflip_en #(1)  frac_dec_4c_lv5_ff   (.clk(clk), .rst(rst), .en(cvt_lv5_en), .d(frac_dec_4c_lv5), .q(frac_dec_4c_lv5_q));
+dflip_en #(1)  frac_dec_5c_lv5_ff   (.clk(clk), .rst(rst), .en(cvt_lv5_en), .d(frac_dec_5c_lv5), .q(frac_dec_5c_lv5_q));
+
+wire signed [31:0] frac_dec_0_lv6;
+wire signed [31:0] frac_dec_1_lv6;
+wire signed [31:0] frac_dec_2_lv6;
+wire signed [31:0] frac_dec_3_lv6;
+wire signed [31:0] frac_dec_4_lv6;
+wire signed [31:0] frac_dec_5_lv6;
+wire frac_dec_0s_lv6;
+wire frac_dec_1s_lv6;
+wire frac_dec_2s_lv6;
+wire frac_dec_3s_lv6;
+wire frac_dec_4s_lv6;
+wire frac_dec_5s_lv6;
+
+assign frac_dec_0_lv6[31:16] = frac_dec_0_lv5_q[31:16] + {15'b0, frac_dec_0c_lv5_q};
+assign frac_dec_0_lv6[15:0]  = frac_dec_0_lv5_q[15:0];
+
+assign frac_dec_1_lv6[31:16] = frac_dec_1_lv5_q[31:16] + {15'b0, frac_dec_1c_lv5_q};
+assign frac_dec_1_lv6[15:0]  = frac_dec_1_lv5_q[15:0];
+
+assign frac_dec_2_lv6[31:16] = frac_dec_2_lv5_q[31:16] + {15'b0, frac_dec_2c_lv5_q};
+assign frac_dec_2_lv6[15:0]  = frac_dec_2_lv5_q[15:0];
+
+assign frac_dec_3_lv6[31:16] = frac_dec_3_lv5_q[31:16] + {15'b0, frac_dec_3c_lv5_q};
+assign frac_dec_3_lv6[15:0]  = frac_dec_3_lv5_q[15:0];
+
+assign frac_dec_4_lv6[31:16] = frac_dec_4_lv5_q[31:16] + {15'b0, frac_dec_4c_lv5_q};
+assign frac_dec_4_lv6[15:0]  = frac_dec_4_lv5_q[15:0];
+
+assign frac_dec_5_lv6[31:16] = frac_dec_5_lv5_q[31:16] + {15'b0, frac_dec_5c_lv5_q};
+assign frac_dec_5_lv6[15:0]  = frac_dec_5_lv5_q[15:0];
+
+dflip_en #(1) frac_dec_0s_lv6_ff  (.clk(clk), .rst(rst), .en(cvt_lv6_en), .d(frac_dec_0_lv6[31]), .q(frac_dec_0s_lv6));
+dflip_en #(1) frac_dec_1s_lv6_ff  (.clk(clk), .rst(rst), .en(cvt_lv6_en), .d(frac_dec_1_lv6[31]), .q(frac_dec_1s_lv6));
+dflip_en #(1) frac_dec_2s_lv6_ff  (.clk(clk), .rst(rst), .en(cvt_lv6_en), .d(frac_dec_2_lv6[31]), .q(frac_dec_2s_lv6));
+dflip_en #(1) frac_dec_3s_lv6_ff  (.clk(clk), .rst(rst), .en(cvt_lv6_en), .d(frac_dec_3_lv6[31]), .q(frac_dec_3s_lv6));
+dflip_en #(1) frac_dec_4s_lv6_ff  (.clk(clk), .rst(rst), .en(cvt_lv6_en), .d(frac_dec_4_lv6[31]), .q(frac_dec_4s_lv6));
+dflip_en #(1) frac_dec_5s_lv6_ff  (.clk(clk), .rst(rst), .en(cvt_lv6_en), .d(frac_dec_5_lv6[31]), .q(frac_dec_5s_lv6));
+
+wire [2:0] lead0_num_lv6;
+assign lead0_num_lv6 = frac_dec_0s_lv6 & frac_dec_1s_lv6 & frac_dec_2s_lv6 & frac_dec_3s_lv6 & frac_dec_4s_lv6 & frac_dec_5s_lv6 ? 3'd6 : 
+                       frac_dec_0s_lv6 & frac_dec_1s_lv6 & frac_dec_2s_lv6 & frac_dec_3s_lv6 & frac_dec_4s_lv6                   ? 3'd5 : 
+                       frac_dec_0s_lv6 & frac_dec_1s_lv6 & frac_dec_2s_lv6 & frac_dec_3s_lv6                                     ? 3'd4 : 
+                       frac_dec_0s_lv6 & frac_dec_1s_lv6 & frac_dec_2s_lv6                                                       ? 3'd3 : 
+                       frac_dec_0s_lv6 & frac_dec_1s_lv6                                                                         ? 3'd2 : 
+                       frac_dec_0s_lv6                                                                                           ? 3'd1 : 3'd0;
+
+dflip_en #(3) lead0_num_ff (.clk(clk), .rst(rst), .en(cvt_lv7_en), .d(lead0_num_lv6), .q(lead0_num        ));
 
 endmodule;
