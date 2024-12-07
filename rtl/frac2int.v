@@ -1,23 +1,27 @@
 module frac2int(
     clk,
     rst,
-    cvt_cnt_q,
+    frac2int_start,
     input_754,
     fraction_dec_qual,
     int_dec_qual,
     lead0_num,
-    i754_overflow
+    i754_overflow,
+    frac2int_done
 );
 
 input clk;
 input rst;
 input [31:0] input_754;
-input [1:0] cvt_cnt_q;
+input frac2int_start;
 output [31:0] fraction_dec_qual;
 output [31:0] int_dec_qual;
 output [2:0]  lead0_num;
 output i754_overflow;
+output frac2int_done;
 
+wire input_is0;
+assign input_is0 = ~(|input_754);
 
 wire [7:0] exp;
 wire [23:0] mantissa;
@@ -30,7 +34,8 @@ assign exp_qual = exp - 8'd127;
 parameter signed PINT_23 = 8'd23;
 parameter signed NINT_16 = -8'd16;
 
-assign i754_overflow = exp_qual > PINT_23 | exp_qual < NINT_16 ;
+wire i754_overflow_pre;
+assign i754_overflow_pre = exp_qual > PINT_23 | exp_qual < NINT_16 ;
 
 wire [23:0] mantissa_shift;
 assign mantissa_shift = mantissa >> ~exp_qual+1;
@@ -89,11 +94,16 @@ wire cvt_lv0_en;
 wire cvt_lv1_en;
 wire cvt_lv2_en;
 wire cvt_lv3_en;
+wire cvt_lv4_en;
+wire cvt_lv5_en;
 
-assign cvt_lv0_en = cvt_cnt_q == 2'b0;
-assign cvt_lv1_en = cvt_cnt_q == 2'b1;
-assign cvt_lv2_en = cvt_cnt_q == 2'b10;
-assign cvt_lv3_en = cvt_cnt_q == 2'b11;
+dflip #(1) cvt_lv0_en_ff (.clk(clk), .rst(rst), .d(frac2int_start), .q(cvt_lv0_en   ));
+dflip #(1) cvt_lv1_en_ff (.clk(clk), .rst(rst), .d(cvt_lv0_en    ), .q(cvt_lv1_en   ));
+dflip #(1) cvt_lv2_en_ff (.clk(clk), .rst(rst), .d(cvt_lv1_en    ), .q(cvt_lv2_en   ));
+dflip #(1) cvt_lv3_en_ff (.clk(clk), .rst(rst), .d(cvt_lv2_en    ), .q(cvt_lv3_en   ));
+dflip #(1) cvt_lv4_en_ff (.clk(clk), .rst(rst), .d(cvt_lv3_en    ), .q(cvt_lv4_en   ));
+dflip #(1) cvt_lv5_en_ff (.clk(clk), .rst(rst), .d(cvt_lv4_en    ), .q(cvt_lv5_en   ));
+dflip #(1) cvt_lv6_en_ff (.clk(clk), .rst(rst), .d(cvt_lv5_en    ), .q(frac2int_done));
 
 wire [31:0] integer_part_dec_pre;
 wire [31:0] integer_part_dec;
@@ -144,7 +154,14 @@ wire [22:0] neg_exp_fraction_part;
 assign neg_exp_fraction_part = mantissa_shift[22:0];
 
 wire [22:0] exp_fraction_part;
+wire [22:0] exp_fraction_part_lv0;
+
 assign exp_fraction_part = exp_qual[7] ? neg_exp_fraction_part : pos_exp_fraction_part;
+
+dflip_en #(23) exp_fraction_dec_lv0_ff  (.clk(clk), .rst(rst), .en(frac2int_start), .d(exp_fraction_part   ), .q(exp_fraction_part_lv0));
+dflip_en #(32) integer_part_dec_lv0_ff  (.clk(clk), .rst(rst), .en(frac2int_start), .d(integer_part_dec_pre), .q(integer_part_dec     ));
+dflip_en #(1)  i754_overflow_ff         (.clk(clk), .rst(rst), .en(frac2int_start), .d(i754_overflow_pre   ), .q(i754_overflow        ));
+assign int_dec_qual      = input_is0 ? 16'b0 : integer_part_dec;
 
 wire [32:0] exp_fraction_2n0;
 wire [32:0] exp_fraction_2n1;
@@ -173,22 +190,24 @@ wire [32:0] exp_fraction_2n23;
 
 
 wire [31:0] exp_fraction_dec;
-wire [31:0] exp_fraction_dec_lv0_0 ;
-wire [31:0] exp_fraction_dec_lv0_1 ;
-wire [31:0] exp_fraction_dec_lv0_2 ;
-wire [31:0] exp_fraction_dec_lv0_3 ;
-wire [31:0] exp_fraction_dec_lv0_4 ;
-wire [31:0] exp_fraction_dec_lv0_5 ;
-wire [31:0] exp_fraction_dec_lv0_6 ;
-wire [31:0] exp_fraction_dec_lv0_7 ;
-wire [31:0] exp_fraction_dec_lv0_8 ;
-wire [31:0] exp_fraction_dec_lv1_0 ;
-wire [31:0] exp_fraction_dec_lv1_1 ;
-wire [31:0] exp_fraction_dec_lv1_2 ;
-wire [31:0] exp_fraction_dec_lv1_3 ;
-wire [31:0] exp_fraction_dec_lv2_0 ;
-wire [31:0] exp_fraction_dec_lv2_1 ;
-wire [31:0] exp_fraction_dec_lv3;
+wire [31:0] exp_fraction_dec_lv0_0;
+wire [31:0] exp_fraction_dec_lv0_1;
+wire [31:0] exp_fraction_dec_lv0_2;
+wire [31:0] exp_fraction_dec_lv0_3;
+wire [31:0] exp_fraction_dec_lv0_4;
+wire [31:0] exp_fraction_dec_lv0_5;
+wire [31:0] exp_fraction_dec_lv0_6;
+wire [31:0] exp_fraction_dec_lv0_7;
+wire [31:0] exp_fraction_dec_lv0_8;
+wire [31:0] exp_fraction_dec_lv1_0;
+wire [31:0] exp_fraction_dec_lv1_1;
+wire [31:0] exp_fraction_dec_lv1_2;
+wire [31:0] exp_fraction_dec_lv1_3;
+wire [31:0] exp_fraction_dec_lv2_0;
+wire [31:0] exp_fraction_dec_lv2_1;
+wire [31:0] exp_fraction_dec_lv3_0;
+wire [31:0] exp_fraction_dec_lv3_1;
+wire [31:0] exp_fraction_dec_lv4;
 
 wire [31:0] exp_fraction_dec_lv0_0_q;
 wire [31:0] exp_fraction_dec_lv0_1_q;
@@ -205,32 +224,35 @@ wire [31:0] exp_fraction_dec_lv1_2_q;
 wire [31:0] exp_fraction_dec_lv1_3_q;
 wire [31:0] exp_fraction_dec_lv2_0_q;
 wire [31:0] exp_fraction_dec_lv2_1_q;
+wire [31:0] exp_fraction_dec_lv3_0_q;
+wire [31:0] exp_fraction_dec_lv3_1_q;
+wire [31:0] exp_fraction_dec_lv4_q;
 
-assign exp_fraction_2n1  = {32{exp_fraction_part[22]}} & 32'd5_0000_0000;
-assign exp_fraction_2n2  = {32{exp_fraction_part[21]}} & 32'd2_5000_0000;
-assign exp_fraction_2n3  = {32{exp_fraction_part[20]}} & 32'd1_2500_0000;
-assign exp_fraction_2n4  = {32{exp_fraction_part[19]}} & 32'd0_6250_0000;
-assign exp_fraction_2n5  = {32{exp_fraction_part[18]}} & 32'd0_3125_0000;
-assign exp_fraction_2n6  = {32{exp_fraction_part[17]}} & 32'd0_1562_5000;
-assign exp_fraction_2n7  = {32{exp_fraction_part[16]}} & 32'd0_0781_2500;
-assign exp_fraction_2n8  = {32{exp_fraction_part[15]}} & 32'd0_0390_6250;
-assign exp_fraction_2n9  = {32{exp_fraction_part[14]}} & 32'd0_0195_3125;
-assign exp_fraction_2n10 = {32{exp_fraction_part[13]}} & 32'd0_0097_6562;
-assign exp_fraction_2n11 = {32{exp_fraction_part[12]}} & 32'd0_0048_8281;
-assign exp_fraction_2n12 = {32{exp_fraction_part[11]}} & 32'd0_0024_4140;
-assign exp_fraction_2n13 = {32{exp_fraction_part[10]}} & 32'd0_0012_2070;
-assign exp_fraction_2n14 = {32{exp_fraction_part[9 ]}} & 32'd0_0006_1035;
-assign exp_fraction_2n15 = {32{exp_fraction_part[8 ]}} & 32'd0_0003_0517;
-assign exp_fraction_2n16 = {32{exp_fraction_part[7 ]}} & 32'd0_0001_5258;
-assign exp_fraction_2n17 = {32{exp_fraction_part[6 ]}} & 32'd0_0000_7629;
-assign exp_fraction_2n18 = {32{exp_fraction_part[5 ]}} & 32'd0_0000_3814;
-assign exp_fraction_2n19 = {32{exp_fraction_part[4 ]}} & 32'd0_0000_1907;
-assign exp_fraction_2n20 = {32{exp_fraction_part[3 ]}} & 32'd0_0000_0953;
-assign exp_fraction_2n21 = {32{exp_fraction_part[2 ]}} & 32'd0_0000_0476;
-assign exp_fraction_2n22 = {32{exp_fraction_part[1 ]}} & 32'd0_0000_0238;
-assign exp_fraction_2n23 = {32{exp_fraction_part[0 ]}} & 32'd0_0000_0119;
+assign exp_fraction_2n1  = {32{exp_fraction_part_lv0[22]}} & 32'd5_0000_0000;
+assign exp_fraction_2n2  = {32{exp_fraction_part_lv0[21]}} & 32'd2_5000_0000;
+assign exp_fraction_2n3  = {32{exp_fraction_part_lv0[20]}} & 32'd1_2500_0000;
+assign exp_fraction_2n4  = {32{exp_fraction_part_lv0[19]}} & 32'd0_6250_0000;
+assign exp_fraction_2n5  = {32{exp_fraction_part_lv0[18]}} & 32'd0_3125_0000;
+assign exp_fraction_2n6  = {32{exp_fraction_part_lv0[17]}} & 32'd0_1562_5000;
+assign exp_fraction_2n7  = {32{exp_fraction_part_lv0[16]}} & 32'd0_0781_2500;
+assign exp_fraction_2n8  = {32{exp_fraction_part_lv0[15]}} & 32'd0_0390_6250;
+assign exp_fraction_2n9  = {32{exp_fraction_part_lv0[14]}} & 32'd0_0195_3125;
+assign exp_fraction_2n10 = {32{exp_fraction_part_lv0[13]}} & 32'd0_0097_6562;
+assign exp_fraction_2n11 = {32{exp_fraction_part_lv0[12]}} & 32'd0_0048_8281;
+assign exp_fraction_2n12 = {32{exp_fraction_part_lv0[11]}} & 32'd0_0024_4140;
+assign exp_fraction_2n13 = {32{exp_fraction_part_lv0[10]}} & 32'd0_0012_2070;
+assign exp_fraction_2n14 = {32{exp_fraction_part_lv0[9 ]}} & 32'd0_0006_1035;
+assign exp_fraction_2n15 = {32{exp_fraction_part_lv0[8 ]}} & 32'd0_0003_0517;
+assign exp_fraction_2n16 = {32{exp_fraction_part_lv0[7 ]}} & 32'd0_0001_5258;
+assign exp_fraction_2n17 = {32{exp_fraction_part_lv0[6 ]}} & 32'd0_0000_7629;
+assign exp_fraction_2n18 = {32{exp_fraction_part_lv0[5 ]}} & 32'd0_0000_3814;
+assign exp_fraction_2n19 = {32{exp_fraction_part_lv0[4 ]}} & 32'd0_0000_1907;
+assign exp_fraction_2n20 = {32{exp_fraction_part_lv0[3 ]}} & 32'd0_0000_0953;
+assign exp_fraction_2n21 = {32{exp_fraction_part_lv0[2 ]}} & 32'd0_0000_0476;
+assign exp_fraction_2n22 = {32{exp_fraction_part_lv0[1 ]}} & 32'd0_0000_0238;
+assign exp_fraction_2n23 = {32{exp_fraction_part_lv0[0 ]}} & 32'd0_0000_0119;
 
-assign exp_fraction_dec_lv0_0  = exp_fraction_2n1 + exp_fraction_2n1;
+assign exp_fraction_dec_lv0_0  = exp_fraction_2n1 + exp_fraction_2n2;
 assign exp_fraction_dec_lv0_1  = exp_fraction_2n3 + exp_fraction_2n4;
 assign exp_fraction_dec_lv0_2  = exp_fraction_2n5 + exp_fraction_2n6;
 assign exp_fraction_dec_lv0_3  = exp_fraction_2n7 + exp_fraction_2n8;
@@ -267,14 +289,17 @@ assign exp_fraction_dec_lv2_1  = exp_fraction_dec_lv1_2_q + exp_fraction_dec_lv1
 dflip_en #(32) exp_fraction_dec_lv2_0_ff  (.clk(clk), .rst(rst), .en(cvt_lv2_en), .d(exp_fraction_dec_lv2_0 ), .q(exp_fraction_dec_lv2_0_q));
 dflip_en #(32) exp_fraction_dec_lv2_1_ff  (.clk(clk), .rst(rst), .en(cvt_lv2_en), .d(exp_fraction_dec_lv2_1 ), .q(exp_fraction_dec_lv2_1_q));
 
-assign exp_fraction_dec_lv3  = exp_fraction_dec_lv2_0_q + exp_fraction_dec_lv2_1_q;
-dflip_en #(32) exp_fraction_dec_lv3_ff  (.clk(clk), .rst(rst), .en(cvt_lv3_en), .d(exp_fraction_dec_lv3), .q(exp_fraction_dec));
-dflip_en #(32) integer_part_dec_lv3_ff  (.clk(clk), .rst(rst), .en(cvt_lv3_en), .d(integer_part_dec_pre), .q(integer_part_dec));
+assign exp_fraction_dec_lv3_0 = {16'b0, exp_fraction_dec_lv2_0_q[15:0]} + {16'b0, exp_fraction_dec_lv2_1_q[15:0]};
+assign exp_fraction_dec_lv3_1 = {exp_fraction_dec_lv2_0_q[31:16], 16'b0} + {exp_fraction_dec_lv2_1_q[31:16], 16'b0 };
 
-wire input_is0;
-assign input_is0 = ~(|input_754);
-assign fraction_dec_qual = input_is0 ? 32'b0 : exp_fraction_dec;
-assign int_dec_qual      = input_is0 ? 16'b0 : integer_part_dec;
+dflip_en #(32) exp_fraction_dec_lv3_0_ff  (.clk(clk), .rst(rst), .en(cvt_lv3_en), .d(exp_fraction_dec_lv3_0), .q(exp_fraction_dec_lv3_0_q));
+dflip_en #(32) exp_fraction_dec_lv3_1_ff  (.clk(clk), .rst(rst), .en(cvt_lv3_en), .d(exp_fraction_dec_lv3_1), .q(exp_fraction_dec_lv3_1_q));
+
+assign exp_fraction_dec_lv4 = exp_fraction_dec_lv3_0_q + exp_fraction_dec_lv3_1_q;
+dflip_en #(32) exp_fraction_dec_lv4_ff  (.clk(clk), .rst(rst), .en(cvt_lv4_en), .d(exp_fraction_dec_lv4), .q(exp_fraction_dec_lv4_q));
+
+wire [31:0] fraction_dec_qual_lv5;
+assign fraction_dec_qual_lv5 = input_is0 ? 32'b0 : exp_fraction_dec_lv4_q;
 
 wire signed [31:0] frac_dec_0;
 wire signed [31:0] frac_dec_1;
@@ -283,18 +308,22 @@ wire signed [31:0] frac_dec_3;
 wire signed [31:0] frac_dec_4;
 wire signed [31:0] frac_dec_5;
 
-assign frac_dec_0 = fraction_dec_qual - 32'd1_0000_0000;
-assign frac_dec_1 = fraction_dec_qual - 32'd0_1000_0000;
-assign frac_dec_2 = fraction_dec_qual - 32'd0_0100_0000;
-assign frac_dec_3 = fraction_dec_qual - 32'd0_0010_0000;
-assign frac_dec_4 = fraction_dec_qual - 32'd0_0001_0000;
-assign frac_dec_5 = fraction_dec_qual - 32'd0_0000_1000;
+assign frac_dec_0 = fraction_dec_qual_lv5 - 32'd1_0000_0000;
+assign frac_dec_1 = fraction_dec_qual_lv5 - 32'd0_1000_0000;
+assign frac_dec_2 = fraction_dec_qual_lv5 - 32'd0_0100_0000;
+assign frac_dec_3 = fraction_dec_qual_lv5 - 32'd0_0010_0000;
+assign frac_dec_4 = fraction_dec_qual_lv5 - 32'd0_0001_0000;
+assign frac_dec_5 = fraction_dec_qual_lv5 - 32'd0_0000_1000;
 
-assign lead0_num = frac_dec_0[31] & frac_dec_1[31] & frac_dec_2[31] & frac_dec_3[31] & frac_dec_4[31] & frac_dec_5[31] ? 3'd6 : 
-                   frac_dec_0[31] & frac_dec_1[31] & frac_dec_2[31] & frac_dec_3[31] & frac_dec_4[31]                  ? 3'd5 : 
-                   frac_dec_0[31] & frac_dec_1[31] & frac_dec_2[31] & frac_dec_3[31]                                   ? 3'd4 : 
-                   frac_dec_0[31] & frac_dec_1[31] & frac_dec_2[31]                                                    ? 3'd3 : 
-                   frac_dec_0[31] & frac_dec_1[31]                                                                     ? 3'd2 : 
-                   frac_dec_0[31]                                                                                      ? 3'd1 : 3'd0;
+wire [2:0] lead0_num_lv5;
+assign lead0_num_lv5 = frac_dec_0[31] & frac_dec_1[31] & frac_dec_2[31] & frac_dec_3[31] & frac_dec_4[31] & frac_dec_5[31] ? 3'd6 : 
+                       frac_dec_0[31] & frac_dec_1[31] & frac_dec_2[31] & frac_dec_3[31] & frac_dec_4[31]                  ? 3'd5 : 
+                       frac_dec_0[31] & frac_dec_1[31] & frac_dec_2[31] & frac_dec_3[31]                                   ? 3'd4 : 
+                       frac_dec_0[31] & frac_dec_1[31] & frac_dec_2[31]                                                    ? 3'd3 : 
+                       frac_dec_0[31] & frac_dec_1[31]                                                                     ? 3'd2 : 
+                       frac_dec_0[31]                                                                                      ? 3'd1 : 3'd0;
+
+dflip_en #(32) fraction_dec_qual_ff (.clk(clk), .rst(rst), .en(cvt_lv5_en), .d(fraction_dec_qual_lv5), .q(fraction_dec_qual));
+dflip_en #(3)  lead0_num_ff         (.clk(clk), .rst(rst), .en(cvt_lv5_en), .d(lead0_num_lv5        ), .q(lead0_num        ));
 
 endmodule;

@@ -154,6 +154,7 @@ wire signed [31:0] mul_result;
 //result
 wire exe_done;
 wire cvt_done;
+wire frac2int_done;
 wire init_done;
 
 
@@ -473,7 +474,7 @@ wire [1:0] init_cnt_q;
 wire init_cnt_en;
 
 assign init_cnt_d = init_cnt_q + 2'b01;
-assign init_cnt_en = fsmc_in_exe & (fsme_in_init | fsme_in_done) | fsmc_in_setup;
+assign init_cnt_en = fsmc_in_exe & fsme_in_init | fsmc_in_setup;
 dflip_en #(2) init_cnt_ff (.clk(clk), .rst(rst), .en(init_cnt_en), .d(init_cnt_d), .q(init_cnt_q));
 assign init_done = &init_cnt_q;
 
@@ -496,7 +497,7 @@ dec2bin u_dec2bin_a(.clk(clk),
 
 dec2bin u_dec2bin_b(.clk(clk),
                     .rst(rst),
-                    .init_cnt_q(init_cnt_q),
+                    .init_cnt_q(dec2bin_cnt),
                     .digit0(b_digit0),
                     .digit1(b_digit1),
                     .digit2(b_digit2),
@@ -532,7 +533,7 @@ assign fsme_init_to_multi  = fsme_in_init   & ~invld_input & multi_cyc_op  & ini
 assign fsme_init_to_done   = fsme_in_init   & invld_input & init_done;
 assign fsme_single_to_done = fsme_in_single ;
 assign fsme_multi_to_done  = fsme_in_multi  & div_done; //FIXME
-assign fsme_done_to_idle   = fsme_in_done   & (int_result_op | init_done);
+assign fsme_done_to_idle   = fsme_in_done   & (int_result_op | frac2int_done);
 
 assign fsme_next_state = {`FSME_STATE_WIDTH{fsme_idle_to_init  }} & `FSME_INIT   |
                          {`FSME_STATE_WIDTH{fsme_init_to_single}} & `FSME_SINGLE |
@@ -594,22 +595,24 @@ divider u_divider(.clk(clk),
 );
 
 wire [31:0] frac_dec_qual;
-wire [31:0] int_dec_qual     ;
-wire [2:0] lead0_num        ;
+wire [31:0] int_dec_qual ;
+wire [2:0] lead0_num     ;
 wire i754_overflow;
 
-wire [1:0] frac2int_cnt;
-assign frac2int_cnt = {2{fsme_in_done}} & init_cnt_q;
+wire frac2int_start;
+
+dflip #(1) frac2int_start_ff (.clk(clk), .rst(rst), .d(fsme_next_done), .q(frac2int_start));
 
 frac2int u_frac2int(
     .clk(clk),
     .rst(rst),
-    .cvt_cnt_q(frac2int_cnt),
-    .input_754(div_result_754),
+    .frac2int_start   (frac2int_start),
+    .input_754        (div_result_754),
     .fraction_dec_qual(frac_dec_qual),
     .int_dec_qual     (int_dec_qual ),
     .lead0_num        (lead0_num    ),
-    .i754_overflow(i754_overflow)
+    .i754_overflow    (i754_overflow),
+    .frac2int_done    (frac2int_done)
 );
 
 
