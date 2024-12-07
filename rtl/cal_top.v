@@ -148,6 +148,8 @@ wire [`SWITCH_WIDTH - 1:0] op_qual_lv1;
 wire int_result_op;
 wire single_cyc_op;
 wire multi_cyc_op;
+wire single_cyc_op_lv1;
+wire multi_cyc_op_lv1;
 //exe
 wire signed [`RESULT_WIDTH-1:0] add_result;
 wire signed [`RESULT_WIDTH-1:0] sub_result;
@@ -167,6 +169,7 @@ wire signed [31:0] int_result_cvt_pre_q;
 
 wire invld_result;
 wire invld_input;
+wire invld_input_lv1;
 wire invld_div;
 wire invld_sqrt;
 wire invld_op;
@@ -454,15 +457,14 @@ wire init_cnt_lv1_en;
 wire init_cnt_lv2_en;
 wire init_cnt_lv3_en;
 assign init_cnt_lv1_en = init_cnt_q == 2'b0;
-//assign init_cnt_lv1_en = init_cnt_q == 2'b1;
-//assign init_cnt_lv2_en = init_cnt_q == 2'b10;
-//assign init_cnt_lv3_en = init_cnt_q == 2'b11;
+assign init_cnt_lv2_en = init_cnt_q == 2'b1;
+assign init_cnt_lv3_en = init_cnt_q == 2'b10;
+assign init_cnt_lv4_en = init_cnt_q == 2'b11;
 
 //Operation decode
 assign switch_en = fsmc_next_exe;
 dflip_en #(`SWITCH_WIDTH) switch_ff (.clk(clk), .rst(rst), .en(switch_en), .d(board_cal_switchs), .q(switchs_in_exe));
 
-//In Executioin Stage: D0
 assign op_qual[`OP_ADD ] = switchs_in_exe[`OP_ADD ] ;
 assign op_qual[`OP_SUB ] = switchs_in_exe[`OP_SUB ] & ~switchs_in_exe[0];
 assign op_qual[`OP_MUL ] = switchs_in_exe[`OP_MUL ] & ~(|switchs_in_exe[1:0] );
@@ -490,6 +492,17 @@ assign single_cyc_op = op_qual_lv1[`OP_ADD] |
                        op_qual_lv1[`OP_MUL] ;
 assign multi_cyc_op = op_qual_lv1[`OP_DIV];
 
+//Check input constraint
+assign invld_div  = op_qual_lv1[`OP_DIV ] & ~(|b_digit0 | |b_digit1 | |b_digit2 ); 
+assign invld_sqrt = op_qual_lv1[`OP_SQRT] & a_sign;     
+assign invld_op   = ~(|op_qual_lv1);     
+assign invld_input = invld_div  |
+                     invld_sqrt |
+                     invld_op   ;
+
+dflip_en #(1) invld_input_ff   (.clk(clk), .rst(rst), .en(init_cnt_lv2_en), .d(invld_input  ), .q(invld_input_lv1  ));
+dflip_en #(1) single_cyc_op_ff (.clk(clk), .rst(rst), .en(init_cnt_lv2_en), .d(single_cyc_op), .q(single_cyc_op_lv1));
+dflip_en #(1) multi_cyc_op_ff  (.clk(clk), .rst(rst), .en(init_cnt_lv2_en), .d(multi_cyc_op ), .q(multi_cyc_op_lv1 ));
 
 
 wire [1:0] dec2bin_cnt;
@@ -522,14 +535,6 @@ dec2bin u_dec2bin_b(.clk(clk),
 );
 
 
-//Check input constraint
-assign invld_div  = op_qual_lv1[`OP_DIV ] & ~(|inputb); 
-assign invld_sqrt = op_qual_lv1[`OP_SQRT] & a_sign;     
-
-assign invld_op   = ~(|op_qual_lv1);     
-assign invld_input = invld_div  |
-                     invld_sqrt |
-                     invld_op   ;
 
 //FSME
 assign fsme_in_idle   = fsme_curr_state[0];
@@ -541,11 +546,11 @@ assign fsme_in_done   = fsme_curr_state[4];
 wire div_done;
 
 assign fsme_idle_to_init   = fsme_in_idle   & fsmc_in_exe;
-assign fsme_init_to_single = fsme_in_init   & ~invld_input & single_cyc_op & init_done;
-assign fsme_init_to_multi  = fsme_in_init   & ~invld_input & multi_cyc_op  & init_done;
-assign fsme_init_to_done   = fsme_in_init   & invld_input & init_done;
+assign fsme_init_to_single = fsme_in_init   & ~invld_input_lv1 & single_cyc_op_lv1 & init_done;
+assign fsme_init_to_multi  = fsme_in_init   & ~invld_input_lv1 & multi_cyc_op_lv1  & init_done;
+assign fsme_init_to_done   = fsme_in_init   & invld_input_lv1  & init_done;
 assign fsme_single_to_done = fsme_in_single ;
-assign fsme_multi_to_done  = fsme_in_multi  & div_done; //FIXME
+assign fsme_multi_to_done  = fsme_in_multi  & (div_done); //FIXME
 assign fsme_done_to_idle   = fsme_in_done   & (int_result_op | frac2int_done);
 
 assign fsme_next_state = {`FSME_STATE_WIDTH{fsme_idle_to_init  }} & `FSME_INIT   |
@@ -645,7 +650,7 @@ dflip_en #(32) int_result_ff  (.clk(clk), .rst(rst), .en(exe_done), .d(int_resul
 wire div_overflow;
 assign div_overflow = op_qual_lv1[`OP_DIV] & i754_overflow; 
 assign overflow = 0;//mul_overflow;
-assign invld_result = invld_input | overflow | div_overflow;
+assign invld_result = invld_input_lv1 | overflow | div_overflow;
 
 //Convert Stage
 assign cvt_cnt_rst = exe_done;
