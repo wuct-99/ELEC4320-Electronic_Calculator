@@ -46,14 +46,10 @@
 `define OP_COS  5
 `define OP_SIN  6
 `define OP_TAN  7
-`define OP_ACOS 8
-`define OP_ASIN 9
-`define OP_ATAN 10
-`define OP_LOG  11
-`define OP_POW  12
-`define OP_EXP  13
-`define OP_FACT 14
-`define SWITCH_WIDTH 15
+`define OP_LOG  8 
+`define OP_POW  9 
+`define OP_EXP  10
+`define SWITCH_WIDTH 11
 
 `define RESULT_WIDTH 16
 

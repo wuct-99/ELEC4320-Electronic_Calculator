@@ -8,4 +8,5 @@ $ELEC4320_RTL/dflip.v
 $ELEC4320_RTL/debounce.v
 $ELEC4320_RTL/bin2decdigit.v
 $ELEC4320_RTL/digit_shift.v
+$ELEC4320_RTL/trigonometric.v
 
