@@ -1,6 +1,7 @@
 module divider(
     clk,
     rst,
+    div_rst,
     div_start,
     inputa_sign,
     inputb_sign,
@@ -14,6 +15,7 @@ module divider(
 
 input clk;
 input rst;
+input div_rst;
 input div_start;
 input inputa_sign;
 input inputb_sign;
@@ -33,12 +35,12 @@ assign divisor  = unsign_inputb;
 assign div_invld = ~(|divisor);
 
 //Divider Counter
-wire [4:0] div_cnt;
-wire [4:0] div_cnt_q;
-assign div_cnt_en = div_start;
-assign div_cnt = div_cnt_q + 5'b1;
-dflip_en #(5) div_cnt_ff (.clk(clk), .rst(rst), .en(div_cnt_en), .d(div_cnt), .q(div_cnt_q));
-assign div_done = &div_cnt;
+wire [5:0] div_cnt;
+wire [5:0] div_cnt_q;
+assign div_cnt_en = div_start | div_rst;
+assign div_cnt = div_rst ? 6'd0 : div_cnt_q + 6'b1;
+dflip_en #(6) div_cnt_ff (.clk(clk), .rst(rst), .en(div_cnt_en), .d(div_cnt), .q(div_cnt_q));
+assign div_done = div_cnt == 6'd47;
 
 wire [63:0] shift_acc;
 wire [63:0] acc;

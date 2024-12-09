@@ -584,10 +584,11 @@ assign fsme_state_upd = fsme_idle_to_init   |
                         fsme_div_to_done    |
                         fsme_done_to_idle   ;
 
-assign fsme_next_idle = fsme_next_state[0];
-assign fsme_next_init = fsme_next_state[1];
+assign fsme_next_idle  = fsme_next_state[0];
+assign fsme_next_init  = fsme_next_state[1];
 assign fsme_next_multi = fsme_next_state[3];
-assign fsme_next_done = fsme_next_state[5];
+assign fsme_next_div   = fsme_next_state[4];
+assign fsme_next_done  = fsme_next_state[5];
 
 dflip_en #(`FSME_STATE_WIDTH, `FSME_STATE_WIDTH'h1) fsme_state_ff (.clk(clk), 
                                                                    .rst(rst), 
@@ -632,14 +633,15 @@ wire div_sign;
 wire div_invld;
 
 assign div_start = fsme_in_div;
-assign div_inputa = op_qual_lv1[`OP_DIV] ? {unsign_inputa, 16'b0} : {sin_result[15:0], 16'b0};
-assign div_inputb = op_qual_lv1[`OP_DIV] ? {16'b0, unsign_inputb} : {16'b0, cos_result[15:0]};
+assign div_inputa = op_qual_lv1[`OP_DIV] ? {unsign_inputa, 16'b0} : sin_result;
+assign div_inputb = op_qual_lv1[`OP_DIV] ? {16'b0, unsign_inputb} : cos_result;
 assign div_signa  = op_qual_lv1[`OP_DIV] ? a_sign : sin_sign;
 assign div_signb  = op_qual_lv1[`OP_DIV] ? b_sign : cos_sign;
 
 //Multi cycle execute
 divider u_divider(.clk(clk), 
                   .rst(rst),
+                  .div_rst(fsme_next_div),
                   .div_start(div_start),
                   .inputa_sign(div_signa),
                   .inputb_sign(div_signb),
