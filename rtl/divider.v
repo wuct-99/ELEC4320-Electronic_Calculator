@@ -6,6 +6,7 @@ module divider(
     inputb_sign,
     unsign_inputa,
     unsign_inputb,
+    div_invld,
     div_result,
     div_sign,
     div_done
@@ -16,9 +17,10 @@ input rst;
 input div_start;
 input inputa_sign;
 input inputb_sign;
-input [15:0] unsign_inputa;
-input [15:0] unsign_inputb;
+input [31:0] unsign_inputa;
+input [31:0] unsign_inputb;
 input  div_sign;
+output div_invld;
 output [31:0] div_result;
 output div_done;
 
@@ -26,8 +28,9 @@ output div_done;
 wire [31:0] dividend;
 wire [31:0] divisor;
 
-assign dividend = {unsign_inputa, 16'b0};
-assign divisor  = {16'b0, unsign_inputb};
+assign dividend = unsign_inputa;
+assign divisor  = unsign_inputb;
+assign div_invld = ~(|divisor);
 
 //Divider Counter
 wire [4:0] div_cnt;

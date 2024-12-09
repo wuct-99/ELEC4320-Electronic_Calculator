@@ -1,11 +1,12 @@
-`define FSMC_IDLE    7'h1
-`define FSMC_INPUTA  7'h2
-`define FSMC_INPUTB  7'h4
-`define FSMC_EXE     7'h8
-`define FSMC_CONVERT 7'h10
-`define FSMC_SETUP   7'h20
-`define FSMC_DISPLAY 7'h40
+
 `define FSMC_STATE_WIDTH 7
+`define FSMC_IDLE        `FSMC_STATE_WIDTH'h1
+`define FSMC_INPUTA      `FSMC_STATE_WIDTH'h2
+`define FSMC_INPUTB      `FSMC_STATE_WIDTH'h4
+`define FSMC_EXE         `FSMC_STATE_WIDTH'h8
+`define FSMC_CONVERT     `FSMC_STATE_WIDTH'h10
+`define FSMC_SETUP       `FSMC_STATE_WIDTH'h20
+`define FSMC_DISPLAY     `FSMC_STATE_WIDTH'h40
 
 `define FSMIN_IDLE   5'h1
 `define FSMIN_DIGIT0 5'h2
@@ -14,12 +15,13 @@
 `define FSMIN_SIGN   5'h10
 `define FSMIN_STATE_WIDTH 5
 
-`define FSME_IDLE   5'h1
-`define FSME_INIT   5'h2
-`define FSME_SINGLE 5'h4
-`define FSME_MULTI  5'h8
-`define FSME_DONE   5'h10
-`define FSME_STATE_WIDTH 5
+`define FSME_STATE_WIDTH 6
+`define FSME_IDLE   `FSME_STATE_WIDTH'h1
+`define FSME_INIT   `FSME_STATE_WIDTH'h2
+`define FSME_SINGLE `FSME_STATE_WIDTH'h4
+`define FSME_MULTI  `FSME_STATE_WIDTH'h8
+`define FSME_DIV    `FSME_STATE_WIDTH'h10
+`define FSME_DONE   `FSME_STATE_WIDTH'h20
 
 `define FSMDIV_IDLE   4'h1
 `define FSMDIV_INIT   4'h2

@@ -195,9 +195,18 @@ dflip #(32) z14_ff (.clk(clk), .rst(rst), .d(z14), .q(z14_q));
 dflip #(32) z15_ff (.clk(clk), .rst(rst), .d(z15), .q(z15_q));
 dflip #(32) z16_ff (.clk(clk), .rst(rst), .d(z16), .q(z16_q));
 
-assign cos_data = x16_q[31] ? ~x16_q + 32'b1 : x16_q;
-assign sin_data = y16_q[31] ? ~y16_q + 32'b1 : y16_q;
-assign cos_sign = x16_q[31];
-assign sin_sign = y16_q[31];
+wire [15:0] unsign_angle;
+assign unsign_angle = ~input_angle + 16'b1;
+
+assign sin_data = ~(|unsign_angle)         ? 32'h0      :
+                  (unsign_angle == 16'd90) ? 32'h1_0000 : 
+                  y16_q[31]                ? ~y16_q + 32'b1 : y16_q;
+
+assign cos_data = ~(|unsign_angle)        ? 32'h1_0000 : 
+                  unsign_angle == 16'd90  ? 32'h0      : 
+                  x16_q[31]               ? ~x16_q + 32'b1 : x16_q;
+
+assign sin_sign = ~(|unsign_angle) | (unsign_angle == 16'd90) ? input_angle[15] : y16_q[31];
+assign cos_sign = ~(|unsign_angle) | (unsign_angle == 16'd90) ? input_angle[15] : x16_q[31];
 
 endmodule;
