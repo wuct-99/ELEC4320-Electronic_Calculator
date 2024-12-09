@@ -487,9 +487,10 @@ assign single_cyc_op = op_qual_lv1[`OP_ADD] |
                        op_qual_lv1[`OP_SUB] |
                        op_qual_lv1[`OP_MUL] ;
 
-assign multi_cyc_op = op_qual_lv1[`OP_DIV] |
-                      op_qual_lv1[`OP_COS] |
-                      op_qual_lv1[`OP_SIN] ;
+assign multi_cyc_op = op_qual_lv1[`OP_DIV]  |
+                      op_qual_lv1[`OP_SQRT] |
+                      op_qual_lv1[`OP_COS]  |
+                      op_qual_lv1[`OP_SIN]  ;
 
 //Check input constraint
 assign invld_div  = op_qual_lv1[`OP_DIV ] & ~(|b_digit0 | |b_digit1 | |b_digit2 ); 
@@ -550,13 +551,14 @@ assign fsme_in_done   = fsme_curr_state[4];
 
 wire div_done;
 wire tri_done;
+wire sqrt_done;
 
 assign fsme_idle_to_init   = fsme_in_idle   & fsmc_in_exe;
 assign fsme_init_to_single = fsme_in_init   & ~invld_input_lv1 & single_cyc_op_lv1 & init_done;
 assign fsme_init_to_multi  = fsme_in_init   & ~invld_input_lv1 & multi_cyc_op_lv1  & init_done;
 assign fsme_init_to_done   = fsme_in_init   & invld_input_lv1  & init_done;
 assign fsme_single_to_done = fsme_in_single ;
-assign fsme_multi_to_done  = fsme_in_multi  & (div_done | tri_done); //FIXME
+assign fsme_multi_to_done  = fsme_in_multi  & (div_done | tri_done | sqrt_done); //FIXME
 assign fsme_done_to_idle   = fsme_in_done   & (int_result_op | frac2int_done);
 
 assign fsme_next_state = {`FSME_STATE_WIDTH{fsme_idle_to_init  }} & `FSME_INIT   |
@@ -577,6 +579,7 @@ assign fsme_state_upd = fsme_idle_to_init   |
 
 assign fsme_next_idle = fsme_next_state[0];
 assign fsme_next_init = fsme_next_state[1];
+assign fsme_next_multi = fsme_next_state[3];
 assign fsme_next_done = fsme_next_state[4];
 
 dflip_en #(`FSME_STATE_WIDTH, `FSME_STATE_WIDTH'h1) fsme_state_ff (.clk(clk), 
@@ -639,6 +642,17 @@ trigonometric u_trigonometric(
     .tri_done(tri_done)
 );
 
+wire [31:0] sqrt_result;
+
+sqrt u_sqrt(
+    .clk(clk),
+    .rst(rst),
+    .sqrt_rst(fsme_next_multi) ,
+    .sqrt_start(fsme_in_multi & op_qual_lv1[`OP_SQRT]) ,
+    .inputa(inputa),
+    .sqrt_result(sqrt_result),    
+    .sqrt_done(sqrt_done)
+);
 
 wire [31:0] frac_dec_qual;
 wire [31:0] int_dec_qual ;
@@ -649,9 +663,10 @@ wire frac2int_start;
 dflip #(1) frac2int_start_ff (.clk(clk), .rst(rst), .d(fsme_next_done), .q(frac2int_start));
 
 wire [15:0] frac_part;
-assign frac_part = {16{op_qual_lv1[`OP_DIV]}} & div_result[15:0] |
-                   {16{op_qual_lv1[`OP_COS]}} & cos_result[15:0] |
-                   {16{op_qual_lv1[`OP_SIN]}} & sin_result[15:0] ;
+assign frac_part = {16{op_qual_lv1[`OP_DIV ]}} & div_result[15:0]  |
+                   {16{op_qual_lv1[`OP_SQRT]}} & sqrt_result[15:0] |
+                   {16{op_qual_lv1[`OP_COS ]}} & cos_result[15:0]  |
+                   {16{op_qual_lv1[`OP_SIN ]}} & sin_result[15:0]  ;
 
 frac2int u_frac2int(
     .clk(clk),
@@ -672,19 +687,21 @@ assign sub_result_unsign = sub_result_q[15] ? ~sub_result_q + 1 : sub_result_q;
 assign mul_result_unsign = mul_result_q[15] ? ~mul_result_q + 1 : mul_result_q;
 
 //result
-assign int_result_qual = {32{op_qual_lv1[`OP_ADD]}} & {16'b0, add_result_unsign} |
-                         {32{op_qual_lv1[`OP_SUB]}} & {16'b0, sub_result_unsign} |
-                         {32{op_qual_lv1[`OP_MUL]}} & mul_result_unsign          |
-                         {32{op_qual_lv1[`OP_DIV]}} & {16'b0, div_result[31:16]} |
-                         {32{op_qual_lv1[`OP_COS]}} & {16'b0, cos_result[31:16]} |
-                         {32{op_qual_lv1[`OP_SIN]}} & {16'b0, sin_result[31:16]} ;
+assign int_result_qual = {32{op_qual_lv1[`OP_ADD ]}} & {16'b0, add_result_unsign}  |
+                         {32{op_qual_lv1[`OP_SUB ]}} & {16'b0, sub_result_unsign}  |
+                         {32{op_qual_lv1[`OP_MUL ]}} & mul_result_unsign           |
+                         {32{op_qual_lv1[`OP_DIV ]}} & {16'b0, div_result[31:16]}  |
+                         {32{op_qual_lv1[`OP_SQRT]}} & {16'b0, sqrt_result[31:16]} |
+                         {32{op_qual_lv1[`OP_COS ]}} & {16'b0, cos_result[31:16]}  |
+                         {32{op_qual_lv1[`OP_SIN ]}} & {16'b0, sin_result[31:16]}  ;
 
-assign result_sign = op_qual_lv1[`OP_ADD] & add_result_q[15] |
-                     op_qual_lv1[`OP_SUB] & sub_result_q[15] |
-                     op_qual_lv1[`OP_MUL] & mul_result_q[31] |
-                     op_qual_lv1[`OP_DIV] & div_sign         |
-                     op_qual_lv1[`OP_COS] & cos_sign         |
-                     op_qual_lv1[`OP_SIN] & sin_sign         ;
+assign result_sign = op_qual_lv1[`OP_ADD ] & add_result_q[15] |
+                     op_qual_lv1[`OP_SUB ] & sub_result_q[15] |
+                     op_qual_lv1[`OP_MUL ] & mul_result_q[31] |
+                     op_qual_lv1[`OP_DIV ] & div_sign         |
+                     op_qual_lv1[`OP_SQRT] & 1'b0             |
+                     op_qual_lv1[`OP_COS ] & cos_sign         |
+                     op_qual_lv1[`OP_SIN ] & sin_sign         ;
 
 dflip_en #(32) int_result_ff  (.clk(clk), .rst(rst), .en(exe_done), .d(int_result_qual), .q(int_result_cvt_pre_q));
 
