@@ -637,17 +637,17 @@ wire [31:0] div_result;
 wire div_sign;
 wire div_invld;
 
-wire [15:0] pwr_result;
-wire [15:0] pos_pwr_result;
+wire [31:0] int_pwr_result;
+wire [31:0] pos_pwr_result;
 
 assign div_start = fsme_in_div;
 assign div_inputa = {32{op_qual_lv1[`OP_DIV]}} & {unsign_inputa} |
-                    {32{op_qual_lv1[`OP_TAN]}} & sin_result             |
-                    {32{op_qual_lv1[`OP_POW]}} & {16'b1, 16'b0}         ;
+                    {32{op_qual_lv1[`OP_TAN]}} & sin_result      |
+                    {32{op_qual_lv1[`OP_POW]}} & 32'b1           ;
 
 assign div_inputb = {32{op_qual_lv1[`OP_DIV]}} & {unsign_inputb} |
-                    {32{op_qual_lv1[`OP_TAN]}} & cos_result             |
-                    {32{op_qual_lv1[`OP_POW]}} & {pos_pwr_result, 16'b0}    ; 
+                    {32{op_qual_lv1[`OP_TAN]}} & cos_result      |
+                    {32{op_qual_lv1[`OP_POW]}} & pos_pwr_result  ; 
 
 
 assign div_signa  = op_qual_lv1[`OP_DIV] ? a_sign : sin_sign;
@@ -703,7 +703,7 @@ power u_power(
     .power_overflow(pwr_overflow)
 );
 
-assign pwr_result = ~b_sign ?  pos_pwr_result : div_result[31:16];
+assign int_pwr_result = {32{~b_sign}} &  pos_pwr_result;
 assign pos_power_done = ~b_sign & pwr_done;
 assign neg_power_done = b_sign  & pwr_done;
 
@@ -764,7 +764,7 @@ assign int_result_qual = {32{op_qual_lv1[`OP_ADD ]}} & {16'b0, add_result_unsign
                          {32{op_qual_lv1[`OP_COS ]}} & {16'b0, cos_result[31:16]}  |
                          {32{op_qual_lv1[`OP_SIN ]}} & {16'b0, sin_result[31:16]}  |
                          {32{op_qual_lv1[`OP_TAN ]}} & {16'b0, div_result[31:16]}  |
-                         {32{op_qual_lv1[`OP_POW ]}} & {16'b0, pwr_result[15:0 ]}  ;
+                         {32{op_qual_lv1[`OP_POW ]}} & int_pwr_result              ;
 
 assign result_sign = op_qual_lv1[`OP_ADD ] & add_result_q[15] |
                      op_qual_lv1[`OP_SUB ] & sub_result_q[15] |
@@ -781,7 +781,7 @@ dflip_en #(32) int_result_ff  (.clk(clk), .rst(rst), .en(exe_done), .d(int_resul
 
 //overflow checking
 wire div_invld_qual; 
-assign div_invld_qual = div_invld & (op_qual_lv1[`OP_DIV] | op_qual_lv1[`OP_TAN] | op_qual_lv1[`OP_POW] );
+assign div_invld_qual = div_invld & (op_qual_lv1[`OP_DIV] | op_qual_lv1[`OP_TAN] | op_qual_lv1[`OP_POW]);
 assign invld_result = invld_input_lv1 | div_invld_qual | pwr_overflow;
 
 
