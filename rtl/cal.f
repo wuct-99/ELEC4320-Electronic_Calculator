@@ -11,4 +11,5 @@ $ELEC4320_RTL/digit_shift.v
 $ELEC4320_RTL/trigonometric.v
 $ELEC4320_RTL/sqrt.v
 $ELEC4320_RTL/power.v
+$ELEC4320_RTL/exp.v
 
