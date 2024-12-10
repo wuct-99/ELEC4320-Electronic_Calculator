@@ -495,11 +495,13 @@ assign multi_cyc_op = op_qual_lv1[`OP_SQRT] |
 //Check input constraint
 assign invld_tri = (op_qual_lv1[`OP_COS] | op_qual_lv1[`OP_SIN]) & (|b_digit2 );     
 assign invld_sqrt = op_qual_lv1[`OP_SQRT] & a_sign;     
-assign invld_op   = ~(|op_qual_lv1);     
+assign invld_exp  = op_qual_lv1[`OP_EXP] & ~(|b_digit2 | |b_digit1 | |b_digit0) & ~(|a_digit2 | |a_digit1 | |a_digit0);
 
+assign invld_op   = ~(|op_qual_lv1);     
 
 assign invld_input = invld_tri  |
                      invld_sqrt |
+                     invld_exp  |
                      invld_op   ;
 
 dflip_en #(1) invld_input_ff   (.clk(clk), .rst(rst), .en(init_cnt_lv2_en), .d(invld_input  ), .q(invld_input_lv1  ));
@@ -634,7 +636,7 @@ wire div_invld;
 
 assign div_start = fsme_in_div;
 assign div_inputa = op_qual_lv1[`OP_DIV] ? {unsign_inputa, 16'b0} : sin_result;
-assign div_inputb = op_qual_lv1[`OP_DIV] ? {16'b0, unsign_inputb} : cos_result;
+assign div_inputb = op_qual_lv1[`OP_DIV] ? {unsign_inputb, 16'b0} : cos_result;
 assign div_signa  = op_qual_lv1[`OP_DIV] ? a_sign : sin_sign;
 assign div_signb  = op_qual_lv1[`OP_DIV] ? b_sign : cos_sign;
 
