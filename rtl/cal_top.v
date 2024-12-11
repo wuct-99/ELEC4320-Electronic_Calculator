@@ -775,7 +775,7 @@ wire [31:0] mul_result_unsign;
 
 assign add_result_unsign = add_result_q[15] ? ~add_result_q + 1 : add_result_q;
 assign sub_result_unsign = sub_result_q[15] ? ~sub_result_q + 1 : sub_result_q;
-assign mul_result_unsign = mul_result_q[15] ? ~mul_result_q + 1 : mul_result_q;
+assign mul_result_unsign = mul_result_q[31] ? ~mul_result_q + 1 : mul_result_q;
 
 //result
 assign int_result_qual = {32{op_qual_lv1[`OP_ADD ]}} & {16'b0, add_result_unsign} |
@@ -806,7 +806,7 @@ dflip_en #(32) int_result_ff  (.clk(clk), .rst(rst), .en(exe_done), .d(int_resul
 //overflow checking
 wire div_invld_qual; 
 assign div_invld_qual = div_invld & (op_qual_lv1[`OP_DIV] | op_qual_lv1[`OP_TAN] | op_qual_lv1[`OP_POW]);
-assign invld_result = invld_input_lv1 | div_invld_qual | pwr_overflow;
+assign invld_result = invld_input_lv1 | div_invld_qual | pwr_overflow | exp_overflow;
 
 
 //Convert Stage
