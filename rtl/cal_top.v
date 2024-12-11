@@ -495,7 +495,7 @@ assign multi_cyc_op = op_qual_lv1[`OP_SQRT] |
                       op_qual_lv1[`OP_EXP]  ;
 
 //Check input constraint
-assign invld_tri = (op_qual_lv1[`OP_COS] | op_qual_lv1[`OP_SIN]) & (|b_digit2 );     
+assign invld_tri = (op_qual_lv1[`OP_COS] | op_qual_lv1[`OP_SIN]) & (|a_digit2 );     
 assign invld_sqrt = op_qual_lv1[`OP_SQRT] & a_sign;     
 assign invld_pwr  = op_qual_lv1[`OP_POW] & ~(|b_digit2 | |b_digit1 | |b_digit0) & ~(|a_digit2 | |a_digit1 | |a_digit0);
 
@@ -636,7 +636,8 @@ wire [31:0] div_inputa;
 wire [31:0] div_inputb;
 wire div_signa;
 wire div_signb;
-wire [31:0] div_result;
+wire [15:0] div_result_int;
+wire [23:0] div_result_frac;
 wire div_sign;
 wire div_invld;
 
@@ -669,7 +670,8 @@ divider u_divider(.clk(clk),
                   .unsign_inputa(div_inputa),
                   .unsign_inputb(div_inputb),
                   .div_invld(div_invld), 
-                  .div_result(div_result), 
+                  .div_result_int(div_result_int), 
+                  .div_result_frac(div_result_frac), 
                   .div_sign(div_sign), 
                   .div_done(div_done)
 );
@@ -749,15 +751,15 @@ wire i754_overflow;
 wire frac2int_start;
 dflip #(1) frac2int_start_ff (.clk(clk), .rst(rst), .d(fsme_next_done), .q(frac2int_start));
 
-wire [15:0] frac_part;
-assign frac_part = {16{op_qual_lv1[`OP_DIV ]}}           & div_result[15:0]     |
-                   {16{op_qual_lv1[`OP_SQRT]}}           & sqrt_result[15:0]    |
-                   {16{op_qual_lv1[`OP_COS ]}}           & cos_result[15:0]     |
-                   {16{op_qual_lv1[`OP_SIN ]}}           & sin_result[15:0]     |
-                   {16{op_qual_lv1[`OP_TAN ]}}           & div_result[15:0]     |
-                   {16{op_qual_lv1[`OP_POW ]}}           & div_result[15:0]     |
-                   {16{op_qual_lv1[`OP_EXP ] &  a_sign}} & div_result[15:0]     |
-                   {16{op_qual_lv1[`OP_EXP ] & ~a_sign}} & pos_exp_result[15:0] ;
+wire [23:0] frac_part;
+assign frac_part = {24{op_qual_lv1[`OP_DIV ]}}           & div_result_frac              |
+                   {24{op_qual_lv1[`OP_SQRT]}}           & {sqrt_result[15:0], 8'b0}    |
+                   {24{op_qual_lv1[`OP_COS ]}}           & {cos_result[15:0],  8'b0}    |
+                   {24{op_qual_lv1[`OP_SIN ]}}           & {sin_result[15:0],  8'b0}    |
+                   {24{op_qual_lv1[`OP_TAN ]}}           & div_result_frac              |
+                   {24{op_qual_lv1[`OP_POW ]}}           & div_result_frac              |
+                   {24{op_qual_lv1[`OP_EXP ] &  a_sign}} & div_result_frac              |
+                   {24{op_qual_lv1[`OP_EXP ] & ~a_sign}} & {pos_exp_result[15:0], 8'b0} ;
 
 frac2int u_frac2int(
     .clk(clk),
@@ -781,11 +783,11 @@ assign mul_result_unsign = mul_result_q[31] ? ~mul_result_q + 1 : mul_result_q;
 assign int_result_qual = {32{op_qual_lv1[`OP_ADD ]}} & {16'b0, add_result_unsign} |
                          {32{op_qual_lv1[`OP_SUB ]}} & {16'b0, sub_result_unsign} |
                          {32{op_qual_lv1[`OP_MUL ]}} & mul_result_unsign          |
-                         {32{op_qual_lv1[`OP_DIV ]}} & {16'b0, div_result[31:16]} |
+                         {32{op_qual_lv1[`OP_DIV ]}} & {16'b0, div_result_int   } |
                          {32{op_qual_lv1[`OP_SQRT]}} & {16'b0, sqrt_result[31:16]}|
                          {32{op_qual_lv1[`OP_COS ]}} & {16'b0, cos_result[31:16]} |
                          {32{op_qual_lv1[`OP_SIN ]}} & {16'b0, sin_result[31:16]} |
-                         {32{op_qual_lv1[`OP_TAN ]}} & {16'b0, div_result[31:16]} |
+                         {32{op_qual_lv1[`OP_TAN ]}} & {16'b0, div_result_int   } |
                          {32{op_qual_lv1[`OP_POW ]}} & int_pwr_result             |
                          {32{op_qual_lv1[`OP_EXP ]}} & {16'b0, exp_result[31:16]} ;
 
