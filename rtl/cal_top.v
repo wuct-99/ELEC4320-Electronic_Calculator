@@ -131,6 +131,7 @@ wire fsmin_in_digit2;
 wire fsmin_in_sign;
 wire fsmin_state_upd;
 wire fsmin_state_rst;
+
 //decimal to binary
 wire [`RESULT_WIDTH-1:0] unsign_inputa; 
 wire [`RESULT_WIDTH-1:0] unsign_inputb;
@@ -158,12 +159,10 @@ wire cvt_done;
 wire frac2int_done;
 wire init_done;
 
-
 wire overflow;
 wire signed [31:0] int_result_qual;
 wire signed [31:0] int_result_cvt_pre;
 wire signed [31:0] int_result_cvt_pre_q;
-
 
 wire invld_result;
 wire invld_input;
@@ -180,7 +179,48 @@ wire cvt_cnt_rst;
 
 wire result_sign;
 
+wire [39:0] int_dec_digit;
+wire [39:0] frac_dec_digit;
+
+wire [39:0] int_digits_for_display;
+wire [39:0] frac_digits_for_display;
+wire [9:0] int_digits_idx_is0;
+wire [9:0] frac_digits_idx_is0;
+
+wire [39:0] int_digits_for_display_lv1;
+wire [39:0] frac_digits_for_display_lv1;
+wire [9:0] int_digits_idx_is0_lv1;
+wire [9:0] frac_digits_idx_is0_lv1;
+
 //display stage
+wire int_part_is0;
+wire frac_part_is0;
+wire [39:0] int_digits_add_dots;
+wire [39:0] frac_digits_for_display_adj;
+wire [9:0]  int_digits_idx_is0_non0int_adj;
+wire [9:0]  int_digits_idx_is0_adj;
+
+wire int_part_is0_lv2;
+wire frac_part_is0_lv2;
+wire [39:0] int_digits_add_dots_lv2;
+wire [39:0] frac_digits_for_display_adj_lv2;
+wire [9:0]  int_digits_idx_is0_non0int_adj_lv2;
+wire [9:0]  int_digits_idx_is0_adj_lv2;
+
+wire [39:0] frac_digits_for_display_shift_lead0;
+wire [39:0] frac_digits_for_display_align_non0int;
+wire [39:0] frac_digits_for_display_align_int;
+wire [39:0] mask_for_int_part;
+wire [39:0] mask_for_frac_part;
+wire [39:0] int_frac_digits_for_display;
+wire [39:0] int_frac_digits_for_display_lv3;
+
+wire [8:2] int_frac_digits_isa;
+wire [39:0] output_digits_for_display;
+wire [39:0] output_digits_for_display_lv4;
+wire [15:0] output_digits_for_display_st2;
+wire [15:0] output_digits_for_display_st3;
+
 wire [`DISP_STG_WIDTH-1:0] total_disp_stage_pre;
 wire [2:0] int_stage_final; 
 wire [2:0] frac_stage_final; 
@@ -196,7 +236,6 @@ wire [3:0] output_sign_for_st3;
 wire [3:0] output_digit2_for_st3;
 wire [3:0] output_digit1_for_st3;
 wire [3:0] output_digit0_for_st3;
-
 
 wire display_stage_en;
 wire [2:0] display_stage  ;
@@ -237,7 +276,6 @@ assign button_down = button_qual[`BUTTON_DOWN];
 assign button_left = button_qual[`BUTTON_LEFT];
 assign button_right= button_qual[`BUTTON_RIGHT];
 assign button_mid  = button_qual[`BUTTON_MID];
-
 
 //FSMC
 assign fsmc_state_upd = fsmc_idle_to_inputa    |
@@ -829,8 +867,6 @@ wire bin2decdigit_en;
 assign bin2decdigit_init = ~(|cvt_cnt_q);
 assign bin2decdigit_en = fsmc_in_convert;
 
-wire [39:0] int_dec_digit;
-wire [39:0] frac_dec_digit;
 bin2decdigit u_bin2decdigit_for_int(
     .clk(clk),
     .rst(rst),
@@ -859,15 +895,6 @@ assign setup_lv1_en = fsmc_in_setup & init_cnt_q == 2'b01;
 assign setup_lv2_en = fsmc_in_setup & init_cnt_q == 2'b10;
 assign setup_lv3_en = fsmc_in_setup & init_cnt_q == 2'b11;
 
-wire [39:0] int_digits_for_display;
-wire [39:0] frac_digits_for_display;
-wire [9:0] int_digits_idx_is0;
-wire [9:0] frac_digits_idx_is0;
-
-wire [39:0] int_digits_for_display_lv1;
-wire [39:0] frac_digits_for_display_lv1;
-wire [9:0] int_digits_idx_is0_lv1;
-wire [9:0] frac_digits_idx_is0_lv1;
 //Level 0
 digit_shift u_digit_shift_for_int(
     .clk(clk),
@@ -892,21 +919,6 @@ dflip_en #(10) int_digits_idx_is0_ff      (.clk(clk), .rst(rst), .en(setup_lv0_e
 dflip_en #(10) frac_digits_idx_is0_ff     (.clk(clk), .rst(rst), .en(setup_lv0_en), .d(frac_digits_idx_is0    ), .q(frac_digits_idx_is0_lv1    ));
 //Level 1
 //display digit
-wire int_part_is0;
-wire frac_part_is0;
-wire [39:0] int_digits_add_dots;
-wire [39:0] frac_digits_for_display_adj;
-wire [9:0]  int_digits_idx_is0_non0int_adj;
-wire [9:0]  int_digits_idx_is0_adj;
-
-wire int_part_is0_lv2;
-wire frac_part_is0_lv2;
-wire [39:0] int_digits_add_dots_lv2;
-wire [39:0] frac_digits_for_display_adj_lv2;
-wire [9:0]  int_digits_idx_is0_non0int_adj_lv2;
-wire [9:0]  int_digits_idx_is0_adj_lv2;
-
-
 assign int_part_is0 = &int_digits_idx_is0_lv1;
 assign frac_part_is0 = &frac_digits_idx_is0_lv1;
 
@@ -942,14 +954,6 @@ dflip_en #(1)  int_part_is0_ff                   (.clk(clk), .rst(rst), .en(setu
 dflip_en #(1)  frac_part_is0_ff                  (.clk(clk), .rst(rst), .en(setup_lv1_en), .d(frac_part_is0                  ), .q(frac_part_is0_lv2                  ));
 
 //Level 2
-wire [39:0] frac_digits_for_display_shift_lead0;
-wire [39:0] frac_digits_for_display_align_non0int;
-wire [39:0] frac_digits_for_display_align_int;
-wire [39:0] mask_for_int_part;
-wire [39:0] mask_for_frac_part;
-wire [39:0] int_frac_digits_for_display;
-wire [39:0] int_frac_digits_for_display_lv3;
-
 assign frac_digits_for_display_shift_lead0 = frac_digits_for_display_adj_lv2 >> {lead0_num, 2'b00};
 
 assign frac_digits_for_display_align_non0int = ~(|int_digits_idx_is0_non0int_adj_lv2[9:0]) ? frac_digits_for_display_shift_lead0 :
@@ -981,10 +985,6 @@ assign int_frac_digits_for_display = int_digits_add_dots_lv2 & mask_for_int_part
 dflip_en #(40) int_frac_digits_for_display_ff (.clk(clk), .rst(rst), .en(setup_lv2_en), .d(int_frac_digits_for_display), .q(int_frac_digits_for_display_lv3));
 
 //Lv3
-wire [8:2] int_frac_digits_isa;
-wire [39:0] output_digits_for_display;
-wire [39:0] output_digits_for_display_lv4;
-
 assign int_frac_digits_isa[8] = int_frac_digits_for_display_lv3[35:32] == 4'ha;
 assign int_frac_digits_isa[7] = int_frac_digits_for_display_lv3[31:28] == 4'ha;
 assign int_frac_digits_isa[6] = int_frac_digits_for_display_lv3[27:24] == 4'ha;
@@ -997,8 +997,6 @@ assign int_frac_digits_isa[2] = int_frac_digits_for_display_lv3[11:8 ] == 4'ha;
 assign output_digits_for_display = int_result_op | frac_part_is0_lv2 ? int_digits_for_display_lv1 : int_frac_digits_for_display_lv3;
 dflip_en #(40) output_digits_for_display_ff (.clk(clk), .rst(rst), .en(setup_lv3_en), .d(output_digits_for_display), .q(output_digits_for_display_lv4));
 
-wire [15:0] output_digits_for_display_st2;
-wire [15:0] output_digits_for_display_st3;
 assign output_digits_for_display_st2 = {output_digits_for_display_lv4[27:12]};
 assign output_digits_for_display_st3 = {output_digits_for_display_lv4[11:0], 4'ha};
 
@@ -1016,21 +1014,29 @@ assign output_digit2_for_st3 = output_digits_for_display_st3[11:8];
 assign output_digit1_for_st3 = output_digits_for_display_st3[7:4];
 assign output_digit0_for_st3 = output_digits_for_display_st3[3:0];
 
-
 //Display stage
+//More than 7 digit need to use 3 stages to dispaly
+//4-7 digit need to use 2 stages to dispaly
+//3 digit need to use 1 stages to dispaly
 assign int_stage_final = |int_digits_idx_is0[9:6] ? 3'b01 :
                          |int_digits_idx_is0[5:2] ? 3'b10 : 3'b11;
 
 assign frac_stage_final = |int_frac_digits_isa[8:6] ? 3'b01 :
                           |int_frac_digits_isa[5:2] ? 3'b10 : 3'b11;
-
+//choose integer digit if integer result
 assign total_disp_stage_pre = int_result_op ?  int_stage_final : frac_stage_final;
 
+//press mid to next display stage
 assign display_stage_en = fsmc_in_display & button_mid & ~display_last_stage | fsmc_in_setup;
+//reset display stage in dispaly setup
+//else display stage + 1
 assign display_stage = fsmc_in_setup ? 3'b0 : display_stage_q + 1'b1;
+//Check if it is last stage 
+//if invld result, it will move to the last stage
 assign display_last_stage = (display_stage == total_disp_stage_pre) | invld_result;
-
 dflip_en #(`DISP_STG_WIDTH) display_stage_ff (.clk(clk), .rst(rst), .en(display_stage_en), .d(display_stage), .q(display_stage_q));
-assign cal_board_display_stage = display_stage_q + 3'b1;
+
+//display stage LED, display in board
+assign cal_board_display_stage = {`DISP_STG_WIDTH{fsmc_in_display}} & (total_disp_stage_pre - display_stage_q);
 
 endmodule
