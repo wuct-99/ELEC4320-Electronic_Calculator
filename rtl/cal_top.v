@@ -643,7 +643,7 @@ wire div_invld;
 
 wire [31:0] int_pwr_result;
 wire [31:0] pos_pwr_result;
-wire [31:0] pos_exp_result;
+wire [39:0] pos_exp_result;
 
 assign div_start = fsme_in_div;
 assign div_inputa = {32{op_qual_lv1[`OP_DIV]}} & {unsign_inputa} |
@@ -654,7 +654,7 @@ assign div_inputa = {32{op_qual_lv1[`OP_DIV]}} & {unsign_inputa} |
 assign div_inputb = {32{op_qual_lv1[`OP_DIV]}} & {unsign_inputb} |
                     {32{op_qual_lv1[`OP_TAN]}} & cos_result      |
                     {32{op_qual_lv1[`OP_POW]}} & pos_pwr_result  | 
-                    {32{op_qual_lv1[`OP_EXP]}} & pos_exp_result  ; 
+                    {32{op_qual_lv1[`OP_EXP]}} & pos_exp_result[39:8]; 
 
 
 assign div_signa  = op_qual_lv1[`OP_DIV] ? a_sign : sin_sign;
@@ -688,6 +688,7 @@ trigonometric u_trigonometric(
     .sin_sign(sin_sign),
     .tri_done(tri_done)
 );
+assign cos_sin_done = (op_qual_lv1[`OP_SIN] | op_qual_lv1[`OP_COS]) & tri_done;
 
 wire pwr_done;
 wire pwr_sign;
@@ -724,12 +725,12 @@ exp u_exp(
     .exp_overflow(exp_overflow)
 );
 
-wire [31:0] exp_result;
-assign exp_result = {32{~a_sign | ~(|unsign_inputa)}} &  pos_exp_result;
+wire [15:0] int_exp_result;
+wire [23:0] exp_result_frac;
+assign int_exp_result = {16{~a_sign | ~(|unsign_inputa)}} &  pos_exp_result[39:24];
+assign exp_result_frac = a_sign ? div_result_frac : pos_exp_result[23:0];
 assign pos_exp_done = ~a_sign & exp_done;
 assign neg_exp_done = a_sign  & exp_done;
-
-assign cos_sin_done = (op_qual_lv1[`OP_SIN] | op_qual_lv1[`OP_COS]) & tri_done;
 
 wire [31:0] sqrt_result;
 
@@ -751,15 +752,16 @@ wire i754_overflow;
 wire frac2int_start;
 dflip #(1) frac2int_start_ff (.clk(clk), .rst(rst), .d(fsme_next_done), .q(frac2int_start));
 
+
+
 wire [23:0] frac_part;
-assign frac_part = {24{op_qual_lv1[`OP_DIV ]}}           & div_result_frac              |
-                   {24{op_qual_lv1[`OP_SQRT]}}           & {sqrt_result[15:0], 8'b0}    |
-                   {24{op_qual_lv1[`OP_COS ]}}           & {cos_result[15:0],  8'b0}    |
-                   {24{op_qual_lv1[`OP_SIN ]}}           & {sin_result[15:0],  8'b0}    |
-                   {24{op_qual_lv1[`OP_TAN ]}}           & div_result_frac              |
-                   {24{op_qual_lv1[`OP_POW ]}}           & div_result_frac              |
-                   {24{op_qual_lv1[`OP_EXP ] &  a_sign}} & div_result_frac              |
-                   {24{op_qual_lv1[`OP_EXP ] & ~a_sign}} & {pos_exp_result[15:0], 8'b0} ;
+assign frac_part = {24{op_qual_lv1[`OP_DIV ]}} & div_result_frac           |
+                   {24{op_qual_lv1[`OP_SQRT]}} & {sqrt_result[15:0], 8'b0} |
+                   {24{op_qual_lv1[`OP_COS ]}} & {cos_result[15:0],  8'b0} |
+                   {24{op_qual_lv1[`OP_SIN ]}} & {sin_result[15:0],  8'b0} |
+                   {24{op_qual_lv1[`OP_TAN ]}} & div_result_frac           |
+                   {24{op_qual_lv1[`OP_POW ]}} & div_result_frac           |
+                   {24{op_qual_lv1[`OP_EXP ]}} & exp_result_frac           ;
 
 frac2int u_frac2int(
     .clk(clk),
@@ -789,7 +791,7 @@ assign int_result_qual = {32{op_qual_lv1[`OP_ADD ]}} & {16'b0, add_result_unsign
                          {32{op_qual_lv1[`OP_SIN ]}} & {16'b0, sin_result[31:16]} |
                          {32{op_qual_lv1[`OP_TAN ]}} & {16'b0, div_result_int   } |
                          {32{op_qual_lv1[`OP_POW ]}} & int_pwr_result             |
-                         {32{op_qual_lv1[`OP_EXP ]}} & {16'b0, exp_result[31:16]} ;
+                         {32{op_qual_lv1[`OP_EXP ]}} & {16'b0, int_exp_result   } ;
 
 assign result_sign = op_qual_lv1[`OP_ADD ] & add_result_q[15] |
                      op_qual_lv1[`OP_SUB ] & sub_result_q[15] |
@@ -807,8 +809,15 @@ dflip_en #(32) int_result_ff  (.clk(clk), .rst(rst), .en(exe_done), .d(int_resul
 
 //overflow checking
 wire div_invld_qual; 
-assign div_invld_qual = div_invld & (op_qual_lv1[`OP_DIV] | op_qual_lv1[`OP_TAN] | op_qual_lv1[`OP_POW]);
-assign invld_result = invld_input_lv1 | div_invld_qual | pwr_overflow | exp_overflow;
+assign div_invld_qual = div_invld & (op_qual_lv1[`OP_DIV]          | 
+                                     op_qual_lv1[`OP_TAN]          | 
+                                     op_qual_lv1[`OP_POW] & b_sign |
+                                     op_qual_lv1[`OP_EXP] & a_sign );
+
+assign invld_result = invld_input_lv1 |
+                      div_invld_qual  | 
+                      pwr_overflow    |
+                      exp_overflow    ;//FIXME
 
 
 //Convert Stage
