@@ -50,11 +50,13 @@ wire sign_en;
 wire [`DIGIT_WIDTH - 1 : 0] a_digit0;
 wire [`DIGIT_WIDTH - 1 : 0] a_digit1;
 wire [`DIGIT_WIDTH - 1 : 0] a_digit2;
-wire a_sign;
 wire [`DIGIT_WIDTH - 1 : 0] b_digit0;
 wire [`DIGIT_WIDTH - 1 : 0] b_digit1;
 wire [`DIGIT_WIDTH - 1 : 0] b_digit2;
+wire a_sign;
 wire b_sign;
+wire a_sign_qual;
+wire b_sign_qual;
 wire a_digit_en;
 wire b_digit_en;
 
@@ -132,12 +134,8 @@ wire fsmin_state_rst;
 //decimal to binary
 wire [`RESULT_WIDTH-1:0] unsign_inputa; 
 wire [`RESULT_WIDTH-1:0] unsign_inputb;
-wire signed [`RESULT_WIDTH-1:0] sign_inputa; 
-wire signed [`RESULT_WIDTH-1:0] sign_inputb;
 wire signed [`RESULT_WIDTH-1:0] inputa; 
 wire signed [`RESULT_WIDTH-1:0] inputb;
-wire [31:0] inputa_754; 
-wire [31:0] inputb_754;
 
 //switch
 wire switch_en;
@@ -495,10 +493,13 @@ assign multi_cyc_op = op_qual_lv1[`OP_SQRT] |
                       op_qual_lv1[`OP_EXP]  ;
 
 //Check input constraint
-assign invld_tri = (op_qual_lv1[`OP_COS] | op_qual_lv1[`OP_SIN]) & (|a_digit2 );     
+//COS,SIN, TAN input range from -99 to 99
+assign invld_tri = (op_qual_lv1[`OP_COS] | op_qual_lv1[`OP_SIN] | op_qual_lv1[`OP_TAN]) & (|a_digit2 );     
+//Square root does not support negative value
 assign invld_sqrt = op_qual_lv1[`OP_SQRT] & a_sign;     
-assign invld_pwr  = op_qual_lv1[`OP_POW] & ~(|b_digit2 | |b_digit1 | |b_digit0) & ~(|a_digit2 | |a_digit1 | |a_digit0);
-
+//Power does not support 0^0
+assign invld_pwr  = op_qual_lv1[`OP_POW] & (~(|a_digit2) & ~(|a_digit1) & ~(|a_digit0)) & (~(|b_digit2) & ~(|b_digit1) & ~(|b_digit0));
+//No opeartion selected
 assign invld_op   = ~(|op_qual_lv1);     
 
 assign invld_input = invld_tri  |
@@ -522,9 +523,7 @@ dec2bin u_dec2bin_a(.clk(clk),
                     .digit2(a_digit2),
                     .digit_sign(a_sign),
                     .unsign_dec(unsign_inputa),
-                    .sign_dec(sign_inputa),
-                    .input_qual(inputa),
-                    .i754_dec(inputa_754)
+                    .input_qual(inputa)
 );
 
 dec2bin u_dec2bin_b(.clk(clk),
@@ -535,12 +534,11 @@ dec2bin u_dec2bin_b(.clk(clk),
                     .digit2(b_digit2),
                     .digit_sign(b_sign),
                     .unsign_dec(unsign_inputb),
-                    .sign_dec(sign_inputb),
-                    .input_qual(inputb),
-                    .i754_dec(inputb_754)
+                    .input_qual(inputb)
 );
 
-
+assign a_sign_qual = a_sign & (|inputa);
+assign b_sign_qual = b_sign & (|inputb);
 
 //FSME
 assign fsme_in_idle   = fsme_curr_state[0];
@@ -657,8 +655,8 @@ assign div_inputb = {32{op_qual_lv1[`OP_DIV]}} & {unsign_inputb} |
                     {32{op_qual_lv1[`OP_EXP]}} & pos_exp_result[39:8]; 
 
 
-assign div_signa  = op_qual_lv1[`OP_DIV] ? a_sign : sin_sign;
-assign div_signb  = op_qual_lv1[`OP_DIV] ? b_sign : cos_sign;
+assign div_signa  = op_qual_lv1[`OP_DIV] ? a_sign_qual : sin_sign;
+assign div_signb  = op_qual_lv1[`OP_DIV] ? b_sign_qual : cos_sign;
 
 //Multi cycle execute
 divider u_divider(.clk(clk), 
@@ -701,7 +699,7 @@ power u_power(
     .power_rst(fsme_next_multi),
     .unsign_inputa(unsign_inputa),
     .unsign_inputb(unsign_inputb),
-    .inputa_sign(a_sign),
+    .inputa_sign(a_sign_qual),
     
     .power_done(pwr_done),
     .power_result(pos_pwr_result),
@@ -709,9 +707,9 @@ power u_power(
     .power_overflow(pwr_overflow)
 );
 
-assign int_pwr_result = {32{~b_sign | ~(|unsign_inputb)}} &  pos_pwr_result;
-assign pos_power_done = ~b_sign & pwr_done;
-assign neg_power_done = b_sign  & pwr_done;
+assign int_pwr_result = {32{~b_sign_qual}} & pos_pwr_result;
+assign pos_power_done = ~b_sign_qual & pwr_done;
+assign neg_power_done = b_sign_qual  & pwr_done;
 
 exp u_exp(
     .clk(clk),
@@ -727,10 +725,10 @@ exp u_exp(
 
 wire [15:0] int_exp_result;
 wire [23:0] exp_result_frac;
-assign int_exp_result = {16{~a_sign | ~(|unsign_inputa)}} &  pos_exp_result[39:24];
-assign exp_result_frac = a_sign ? div_result_frac : pos_exp_result[23:0];
-assign pos_exp_done = ~a_sign & exp_done;
-assign neg_exp_done = a_sign  & exp_done;
+assign int_exp_result = {16{~a_sign_qual}} &  pos_exp_result[39:24];
+assign exp_result_frac = a_sign_qual ? div_result_frac : pos_exp_result[23:0];
+assign pos_exp_done = ~a_sign_qual & exp_done;
+assign neg_exp_done = a_sign_qual  & exp_done;
 
 wire [31:0] sqrt_result;
 
@@ -747,7 +745,6 @@ sqrt u_sqrt(
 wire [31:0] frac_dec_qual;
 wire [31:0] int_dec_qual ;
 wire [2:0] lead0_num     ;
-wire i754_overflow;
 
 wire frac2int_start;
 dflip #(1) frac2int_start_ff (.clk(clk), .rst(rst), .d(fsme_next_done), .q(frac2int_start));
@@ -809,10 +806,10 @@ dflip_en #(32) int_result_ff  (.clk(clk), .rst(rst), .en(exe_done), .d(int_resul
 
 //overflow checking
 wire div_invld_qual; 
-assign div_invld_qual = div_invld & (op_qual_lv1[`OP_DIV]          | 
-                                     op_qual_lv1[`OP_TAN]          | 
-                                     op_qual_lv1[`OP_POW] & b_sign |
-                                     op_qual_lv1[`OP_EXP] & a_sign );
+assign div_invld_qual = div_invld & (op_qual_lv1[`OP_DIV]               | 
+                                     op_qual_lv1[`OP_TAN]               | 
+                                     op_qual_lv1[`OP_POW] & b_sign_qual |
+                                     op_qual_lv1[`OP_EXP] & a_sign_qual );
 
 assign invld_result = invld_input_lv1 |
                       div_invld_qual  | 
@@ -995,8 +992,6 @@ assign int_frac_digits_isa[5] = int_frac_digits_for_display_lv3[23:20] == 4'ha;
 assign int_frac_digits_isa[4] = int_frac_digits_for_display_lv3[19:16] == 4'ha;
 assign int_frac_digits_isa[3] = int_frac_digits_for_display_lv3[15:12] == 4'ha;
 assign int_frac_digits_isa[2] = int_frac_digits_for_display_lv3[11:8 ] == 4'ha;
-//assign int_frac_digits_isa[1] = int_frac_digits_for_display[7:4  ] == 4'ha;
-//assign int_frac_digits_isa[0] = int_frac_digits_for_display[3:0  ] == 4'ha;
 
 //Display Digit Selection
 assign output_digits_for_display = int_result_op | frac_part_is0_lv2 ? int_digits_for_display_lv1 : int_frac_digits_for_display_lv3;
