@@ -24,6 +24,9 @@ output tri_done;
 wire [3:0] tri_cnt_d;
 wire [3:0] tri_cnt_q;
 wire tri_cnt_en;
+wire [15:0] unsign_angle;
+
+//Cordic 
 
 assign tri_cnt_d = tri_cnt_q + 4'b1;
 assign tri_cnt_en = tri_start;
@@ -89,6 +92,10 @@ wire signed [31:0] x16_q, y16_q, z16_q;
 assign x00 = K;
 assign y00 = 32'b0;
 assign z00 = {input_angle, 16'b0};
+
+//x(i+1) = x(i) - d_i (2^-1) (y(i))
+//y(i+1) = y(i) - d_i (2^-1) (x(i))
+//z(i+1) = z(i) - d_i artan(2^-i) 
 
 assign x01 = z00_q[31] ? x00_q +  y00_q         : x00_q -  y00_q;
 assign x02 = z01_q[31] ? x01_q + (y01_q >>> 1)  : x01_q - (y01_q >>> 1)  ;
@@ -195,13 +202,16 @@ dflip #(32) z14_ff (.clk(clk), .rst(rst), .d(z14), .q(z14_q));
 dflip #(32) z15_ff (.clk(clk), .rst(rst), .d(z15), .q(z15_q));
 dflip #(32) z16_ff (.clk(clk), .rst(rst), .d(z16), .q(z16_q));
 
-wire [15:0] unsign_angle;
+//Fill unsign angle for display
 assign unsign_angle = ~input_angle + 16'b1;
 
+//Sin(0) = 0
+//Sin(90) = 1
 assign sin_data = ~(|unsign_angle)         ? 32'h0      :
                   (unsign_angle == 16'd90) ? 32'h1_0000 : 
                   y16_q[31]                ? ~y16_q + 32'b1 : y16_q;
-
+//cos(0) = 1
+//cos(90) = 0
 assign cos_data = ~(|unsign_angle)        ? 32'h1_0000 : 
                   unsign_angle == 16'd90  ? 32'h0      : 
                   x16_q[31]               ? ~x16_q + 32'b1 : x16_q;
