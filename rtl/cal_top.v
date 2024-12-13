@@ -213,11 +213,17 @@ wire pos_power_done;
 wire neg_power_done;
 wire pos_exp_done;
 wire neg_exp_done;
+wire exp_done_pre;
+wire exp_done;
 wire cos_sin_done;
-wire tri_done;
+wire tan_done;
+wire tri_done_pre;
+wire sqrt_done_pre;
 wire sqrt_done;
+wire pwr_done_pre;
 wire pwr_done;
 wire log2_done;
+wire log_done;
 wire log2_done_pre;
 wire logn_done;
 
@@ -702,7 +708,7 @@ assign fsme_init_to_div    = fsme_in_init   & ~invld_input_lv1 & op_qual_lv1[`OP
 assign fsme_init_to_done   = fsme_in_init   & invld_input_lv1  & init_done;
 assign fsme_single_to_done = fsme_in_single ;
 assign fsme_multi_to_done  = fsme_in_multi  & (cos_sin_done | sqrt_done | pos_power_done | pos_exp_done | log2_done); //FIXME
-assign fsme_multi_to_div   = fsme_in_multi  & (tri_done | neg_power_done | neg_exp_done | logn_done); //FIXME
+assign fsme_multi_to_div   = fsme_in_multi  & (tan_done | neg_power_done | neg_exp_done | logn_done); //FIXME
 assign fsme_div_to_done    = fsme_in_div    & div_done;
 assign fsme_done_to_idle   = fsme_in_done   & (int_result_op | frac2int_done);
 
@@ -799,9 +805,11 @@ trigonometric u_trigonometric(
     .sin_data(sin_result),
     .cos_sign(cos_sign),
     .sin_sign(sin_sign),
-    .tri_done(tri_done)
+    .tri_done(tri_done_pre)
 );
-assign cos_sin_done = (op_qual_lv1[`OP_SIN] | op_qual_lv1[`OP_COS]) & tri_done;
+
+assign tan_done = op_qual_lv1[`OP_TAN] & tri_done_pre;
+assign cos_sin_done = (op_qual_lv1[`OP_SIN] | op_qual_lv1[`OP_COS]) & tri_done_pre;
 
 power u_power(
     .clk(clk),
@@ -812,12 +820,12 @@ power u_power(
     .unsign_inputb(unsign_inputb),
     .inputa_sign(a_sign_qual),
     
-    .power_done(pwr_done),
+    .power_done(pwr_done_pre),
     .power_result(pos_pwr_result),
     .power_sign(pwr_sign),
     .power_overflow(pwr_overflow)
 );
-
+assign pwr_done = op_qual_lv1[`OP_POW] & pwr_done_pre;
 assign int_pwr_result = {32{~b_sign_qual}} & pos_pwr_result;
 assign pos_power_done = ~b_sign_qual & pwr_done;
 assign neg_power_done = b_sign_qual  & pwr_done;
@@ -829,13 +837,14 @@ exp u_exp(
     .exp_rst(fsme_next_multi),
     .unsign_inputa(unsign_inputa),
     
-    .exp_done(exp_done),
+    .exp_done(exp_done_pre),
     .exp_result_out(pos_exp_result),
     .exp_overflow(exp_overflow)
 );
 
 assign int_exp_result = {16{~a_sign_qual}} &  pos_exp_result[39:24];
 assign exp_result_frac = a_sign_qual ? div_result_frac : pos_exp_result[23:0];
+assign exp_done = op_qual_lv1[`OP_EXP] & exp_done_pre;
 assign pos_exp_done = ~a_sign_qual & exp_done;
 assign neg_exp_done = a_sign_qual  & exp_done;
 
@@ -846,8 +855,9 @@ sqrt u_sqrt(
     .sqrt_start(fsme_in_multi & op_qual_lv1[`OP_SQRT]) ,
     .inputa(inputa),
     .sqrt_result(sqrt_result),    
-    .sqrt_done(sqrt_done)
+    .sqrt_done(sqrt_done_pre)
 );
+assign sqrt_done = op_qual_lv1[`OP_SQRT] & sqrt_done_pre;
 
 log2 u_log2_a(
     .clk(clk),
@@ -870,8 +880,9 @@ log2 u_log2_b(
 );
 
 assign log_result = unsign_inputa == 16'd2 ? log2_b_result : {div_result_int[7:0], div_result_frac};
-assign log2_done = (unsign_inputa == 16'd2) & log2_done_pre;
-assign logn_done = (unsign_inputa != 16'd2) & log2_done_pre;
+assign log_done = op_qual_lv1[`OP_LOG] & log2_done_pre;
+assign log2_done = (unsign_inputa == 16'd2) & log_done;
+assign logn_done = (unsign_inputa != 16'd2) & log_done;
 
 //Select fraction binary
 dflip #(1) frac2int_start_ff (.clk(clk), .rst(rst), .d(fsme_next_done), .q(frac2int_start));
