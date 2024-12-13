@@ -616,7 +616,7 @@ assign op_qual[`OP_EXP ] = switchs_in_exe[`OP_EXP ] & ~(|switchs_in_exe[9:0]);
 
 dflip_en #(`SWITCH_WIDTH) switch_after_init_ff (.clk(clk), .rst(rst), .en(init_cnt_lv1_en), .d(op_qual), .q(op_qual_lv1));
 
-//Only add, sub, mul must output interger result
+//Only add, sub, mul must output integer result
 assign int_result_op = op_qual_lv1[`OP_ADD] | 
                        op_qual_lv1[`OP_SUB] | 
                        op_qual_lv1[`OP_MUL] ;
@@ -1066,7 +1066,7 @@ assign mask_for_frac_part  = {{4{int_digits_idx_is0_adj[9]}},
 //Prepare mask for integer
 assign mask_for_int_part = ~mask_for_frac_part;
 
-//Combine interger and fraction
+//Combine integer and fraction
 assign int_frac_digits_for_display = int_digits_add_dots_lv2 & mask_for_int_part | frac_digits_for_display_align_int & mask_for_frac_part;
 dflip_en #(40) int_frac_digits_for_display_ff (.clk(clk), .rst(rst), .en(setup_lv2_en), .d(int_frac_digits_for_display), .q(int_frac_digits_for_display_lv3));
 
