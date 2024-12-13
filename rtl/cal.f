@@ -12,4 +12,5 @@ $ELEC4320_RTL/trigonometric.v
 $ELEC4320_RTL/sqrt.v
 $ELEC4320_RTL/power.v
 $ELEC4320_RTL/exp.v
+$ELEC4320_RTL/log2.v
 
