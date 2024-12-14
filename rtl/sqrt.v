@@ -60,4 +60,4 @@ dflip_en #(32) square_root_ff (.clk(clk), .rst(rst), .en(sqrt_cnt_en), .d(square
 
 assign sqrt_result = square_root;
 
-endmodule;
+endmodule

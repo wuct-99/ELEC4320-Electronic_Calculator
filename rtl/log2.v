@@ -96,4 +96,4 @@ dflip_en #(32) m_sq2_ff (.clk(clk), .rst(rst), .en(log_cnt_en), .d(m_sq2_final),
 dflip_en #(24) log2_result_ff (.clk(clk), .rst(rst), .en(log_cnt_en), .d(log2_result), .q(log2_result_q));
 
 assign log2_result_out =  {k_part, log2_result};
-endmodule;
+endmodule

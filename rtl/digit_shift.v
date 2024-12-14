@@ -35,6 +35,7 @@ wire dec_digit_9t2_is0;
 wire dec_digit_9t1_is0;
 wire dec_digit_9t0_is0;
 
+//Check digit whether 0 or not
 assign dec_digit_9t9_is0 = ~(|input_dec[39:36]);
 assign dec_digit_9t8_is0 = ~(|input_dec[39:32]);
 assign dec_digit_9t7_is0 = ~(|input_dec[39:28]);
@@ -57,6 +58,8 @@ assign digit_idx_is0 = {dec_digit_9t0_is0  ,
                         dec_digit_9t8_is0,
                         dec_digit_9t9_is0};
 
+//Check how many leading 0
+//e.g 0d00010234  leading 0 is 3
 assign dec_digit_for_display = dec_digit_9t1_is0 ? {input_dec[3:0], 36'b0}  :
                                dec_digit_9t2_is0 ? {input_dec[7:0], 32'b0}  :
                                dec_digit_9t3_is0 ? {input_dec[11:0], 28'b0} :
@@ -67,6 +70,8 @@ assign dec_digit_for_display = dec_digit_9t1_is0 ? {input_dec[3:0], 36'b0}  :
                                dec_digit_9t8_is0 ? {input_dec[31:0], 8'b0 } :
                                dec_digit_9t9_is0 ? {input_dec[35:0], 4'b0 } : input_dec[39:0];
 
+//If there is leading 0, shift the result to left
+//e.g 0d00010234 -> 0d10234
 assign output_digit0 = (dec_digit_9t1_is0 | dec_digit_9t2_is0 | dec_digit_9t3_is0 | dec_digit_9t4_is0 | dec_digit_9t5_is0 | dec_digit_9t6_is0 | dec_digit_9t7_is0 | dec_digit_9t8_is0 | dec_digit_9t9_is0)? 4'ha : dec_digit_for_display[3:0];
 assign output_digit1 = (dec_digit_9t1_is0 | dec_digit_9t2_is0 | dec_digit_9t3_is0 | dec_digit_9t4_is0 | dec_digit_9t5_is0 | dec_digit_9t6_is0 | dec_digit_9t7_is0 | dec_digit_9t8_is0) ? 4'ha : dec_digit_for_display[7:4];
 assign output_digit2 = (dec_digit_9t1_is0 | dec_digit_9t2_is0 | dec_digit_9t3_is0 | dec_digit_9t4_is0 | dec_digit_9t5_is0 | dec_digit_9t6_is0 | dec_digit_9t7_is0 )? 4'ha : dec_digit_for_display[11:8];
@@ -89,4 +94,4 @@ assign output_digits = {output_digit9,
                         output_digit1,
                         output_digit0};
 
-endmodule;
+endmodule

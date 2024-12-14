@@ -35,4 +35,4 @@ assign dec_digit_en = bin2decdigit_en;
 dflip_en #(72) dec_digit_ff (.clk(clk), .rst(rst), .en(dec_digit_en), .d(dec_digit_shift), .q(dec_digit_q));
 assign output_dec = dec_digit_q[71:32];
 
-endmodule;
+endmodule

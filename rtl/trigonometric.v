@@ -219,4 +219,4 @@ assign cos_data = ~(|unsign_angle)        ? 32'h1_0000 :
 assign sin_sign = ~(|unsign_angle) | (unsign_angle == 16'd90) ? input_angle[15] : y16_q[31];
 assign cos_sign = ~(|unsign_angle) | (unsign_angle == 16'd90) ? input_angle[15] : x16_q[31];
 
-endmodule;
+endmodule
