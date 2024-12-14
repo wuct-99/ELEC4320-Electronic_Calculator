@@ -28,6 +28,7 @@ input [10:0] calc_mode;
 input 							calc_rslt_vld;
 input        calc_num_or_mode_invld;
 
+output       calc_rslt_invld;
 output [15:0] rslt_digits_a;
 output [15:0] rslt_digits_b;
 output        rslt_sign;
@@ -71,7 +72,7 @@ dffr #(1) prev_rslt_vld_ff (.clk(clk), .rst_n(rst_n), .d(calc_rslt_vld), .q(calc
 //only add, minus, mult is full integer outpot 
 //multiply the fraction to make it into integer and apply double dabble 
 assign conv_counter_rst = calc_rslt_vld & ~calc_rslt_vld_d1;
-    
+assign calc_rslt_invld =   calc_num_or_mode_invld | (~calc_rslt_sign & (&calc_rslt)) ;
 
 //fraction part conversiono
 //for now assume need 3 clocks to finish the adding 
@@ -205,9 +206,10 @@ bin_2_bcd_dd_mod fraction_part_conv (.clk(clk), .rst_n(rst_n), .conv_start(frac_
 //fraction part done then move to converting int part 
 wire calc_rslt_int_part_expand = {{16'b0}, calc_rslt_int};
 wire int_bcd_conv_rdy;
+assign int_bcd_conv_rdy = 
 //wire [39:0] int_bcd_conv_rslt;
 wire [31:0] int_bcd_conv_rslt;
-bin_2_bcd_dd_mod int_part_conv  (.clk(clk), .rst_n(rst_n), .conv_start(conv_counter_rst), .conv_rslt_rdy(int_bcd_conv_rdy), .in_digits(cal_rslt_in_part_expand), .out_digits(int_bcd_conv_rslt));
+bin_2_bcd_dd_mod int_part_conv  (.clk(clk), .rst_n(rst_n), .conv_start(conv_counter_rst), .conv_rslt_rdy(int_bcd_conv_rdy), .in_digits(calc_rslt_in_part_expand), .out_digits(int_bcd_conv_rslt));
     
 //after bin_2_bcd --> concat the results and send to aligner to output the final 8 digit bcd results 
 wire [63:0] aligner_in_bcd_int_flt_concat;

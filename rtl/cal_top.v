@@ -123,7 +123,7 @@ case(cur_pstate)
 	              if(rslt_vld) begin
                    nxt_pstate = 2'b11;
                end
-				  else if(in_num_or_mode_invld) begin
+				  else if(calc_rslt_invld) begin
                    nxt_pstate = 2'b11; //display error msg
                end
            end
@@ -195,13 +195,14 @@ wire            rslt_is_fp;
 wire            rslt_8_digit;
 wire [7:0]      rslt_dp_pos;
 wire            bcd_conv_done;
-
+wire            calc_rslt_invld;
 rslt_bin2bcd rslt_bcd_conversion(
 .clk                       (                    clk),
 .rst_n                     (                  rst_n),
 .calc_rslt                 (              calc_rslt),
 .calc_rslt_vld             (          calc_rslt_vld),
 .calc_num_or_mode_invld    ( calc_mode_or_num_invld),
+.calc_rslt_invld           (        calc_rslt_invld),
 .calc_mode                 (              calc_mode),
 .rslt_digit_a              (           rslt_digit_a),
 .rslt_digit_b              (           rslt_digit_b),
