@@ -235,7 +235,6 @@ wire init_done;
 
 wire overflow;
 wire signed [31:0] int_result_qual;
-wire signed [31:0] int_result_cvt_pre;
 wire signed [31:0] int_result_cvt_pre_q;
 
 wire [15:0] add_result_unsign;
@@ -266,7 +265,6 @@ wire [4:0] cvt_cnt_q;
 wire cvt_cnt_en;
 wire cvt_cnt_rst;
 wire [31:0] frac_dec_qual;
-wire [31:0] int_dec_qual ;
 wire [2:0] lead0_num     ;
 
 wire bin2decdigit_init;
