@@ -885,7 +885,10 @@ log2 u_log2_b(
     .log2_done(log2_done_pre)
 );
 
-assign log_result = unsign_inputa == 16'd2 ? log2_b_result : {div_result_int[7:0], div_result_frac};
+assign log_result = unsign_inputb == 16'd1 ? 8'b0          :
+                    unsign_inputa == 16'd2 ? log2_b_result : {div_result_int[7:0], div_result_frac};
+
+
 assign log_done = op_qual_lv1[`OP_LOG] & log2_done_pre;
 assign log2_done = (unsign_inputa == 16'd2) & log_done;
 assign logn_done = (unsign_inputa != 16'd2) & log_done;
