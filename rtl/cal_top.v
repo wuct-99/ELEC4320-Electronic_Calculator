@@ -254,6 +254,7 @@ wire invld_op;
 wire pwr_overflow;
 wire div_invld;
 wire div_invld_qual; 
+wire tri_invld_qual; 
 
 //convert fraction binary to decimal
 wire frac2int_start;
@@ -944,8 +945,11 @@ assign div_invld_qual = div_invld & (op_qual_lv1[`OP_DIV]               |
                                      op_qual_lv1[`OP_POW] & b_sign_qual |
                                      op_qual_lv1[`OP_EXP] & a_sign_qual );
 
+assign tri_invld_qual = (op_qual_lv1[`OP_TAN] | op_qual_lv1[`OP_COS] | op_qual_lv1[`OP_SIN]) & unsign_inputa > 16'd90;
+
 assign invld_result = invld_input_lv1 |
                       div_invld_qual  | 
+                      tri_invld_qual  | 
                       pwr_overflow    |
                       exp_overflow    ;//FIXME
 

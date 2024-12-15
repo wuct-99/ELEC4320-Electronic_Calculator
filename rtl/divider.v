@@ -22,7 +22,7 @@ input inputa_sign;
 input inputb_sign;
 input [31:0] unsign_inputa;
 input [31:0] unsign_inputb;
-input  div_sign;
+output  div_sign;
 output div_invld;
 output [15:0] div_result_int;
 output [23:0] div_result_frac;
@@ -68,7 +68,7 @@ wire exe_en = div_start;
 dflip_en #(80) acc_ff      (.clk(clk), .rst(rst), .en(exe_en), .d(acc), .q(acc_q));
 dflip_en #(40) quotient_ff (.clk(clk), .rst(rst), .en(exe_en), .d(quotient), .q(quotient_q)); 
 
-assign div_sign = (inputa_sign ^ inputb_sign);
+assign div_sign = ~(|dividend) ? 1'b0 : (inputa_sign ^ inputb_sign);
 //16 bit integer
 assign div_result_int  = quotient[39:24];
 //24 bit fraction
