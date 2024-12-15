@@ -348,14 +348,6 @@ wire clk_display_en;
 wire clk_display_state_d;
 wire clk_display_state_q;
 wire clk_display;
-//input clk define
-wire [7:0] clk_input_cnt_d;
-wire [7:0] clk_input_cnt_q;
-wire clk_input_en;
-wire clk_input_state_d;
-wire clk_input_state_q;
-wire clk_input;
-
 //------------------------------------------------
 //Internal circuit 
 //------------------------------------------------
@@ -372,19 +364,8 @@ dflip_en #(1) clk_display_state_ff (.clk(clk), .rst(rst), .en(clk_display_en), .
 assign clk_display = clk_display_state_q;
 
 
-//input clk 
-assign clk_input_cnt_d = clk_input_cnt_q + 2'b01;
-dflip #(8) clk_input_cnt_ff (.clk(clk), .rst(rst), .d(clk_input_cnt_d), .q(clk_input_cnt_q));
-
-assign clk_input_en = &clk_input_cnt_q;
-//toggle the clk signal
-assign clk_input_state_d = ~clk_input_state_q;
-dflip_en #(1) clk_input_state_ff (.clk(clk), .rst(rst), .en(clk_input_en), .d(clk_input_state_d), .q(clk_input_state_q));
-assign clk_input = clk_input_state_q & (fsmc_in_inputa | fsmc_in_inputb | fsmc_in_display);
-
-
 //button debouncing 
-debounce #(`BUTTON_WIDTH) button_debounce (.clk(clk_input), .rst(rst), .data_in(board_cal_button), .data_out(debounce_button));
+debounce #(`BUTTON_WIDTH) button_debounce (.clk(clk), .rst(rst), .data_in(board_cal_button), .data_out(debounce_button));
 
 //button decode and setup button pirority
 //left > right > up > down > mid

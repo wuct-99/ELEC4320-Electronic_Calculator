@@ -38,16 +38,13 @@ wire [`RESULT_WIDTH-1:0] lv1_0_q;
 wire [`RESULT_WIDTH-1:0] lv1_1_q;
 wire [`RESULT_WIDTH-1:0] lv2;
 wire [`RESULT_WIDTH-1:0] lv3;
-wire [31:0] lv4;
 
-wire [7:0] exp;
-wire [22:0] frac;
 wire [`RESULT_WIDTH-1:0] sign_dec;
 
 //Init Pipeline  Enable signal
-assign init_lv1_en = init_cnt_q == 2'b0;
-assign init_lv2_en = init_cnt_q == 2'b1;
-assign init_lv3_en = init_cnt_q == 2'b10;
+assign init_lv1_en = init_cnt_q == 2'b01;
+assign init_lv2_en = init_cnt_q == 2'b10;
+assign init_lv3_en = init_cnt_q == 2'b11;
 
 //Covert decimal input to binary
 //Binary value = digit2 x 100 + digit1 x 10 + digit0
