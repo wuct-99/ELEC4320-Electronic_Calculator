@@ -28,13 +28,17 @@ wire [3:0] tri_cnt_q;
 wire tri_cnt_en;
 wire [15:0] unsign_angle;
 
+wire tri_done_pre_d0;
+
 //Cordic 
 
 assign tri_cnt_d = tri_rst ? 4'b0 : tri_cnt_q + 4'b1;
-assign tri_cnt_en = tri_start;
+assign tri_cnt_en = tri_start | tri_rst;
 dflip_en #(4) tri_cnt_ff (.clk(clk), .rst(rst), .en(tri_cnt_en), .d(tri_cnt_d), .q(tri_cnt_q));
-assign tri_done = &tri_cnt_q;
+assign tri_done_pre = &tri_cnt_q;
 
+dflip #(1) tri_done_pre_d0_ff (.clk(clk), .rst(rst), .d(tri_done_pre   ), .q(tri_done_pre_d0));
+dflip #(1) tri_done_pre_d1_ff (.clk(clk), .rst(rst), .d(tri_done_pre_d0), .q(tri_done       ));
 
 //arctan table
 parameter ang_00 = 32'd2949120; //45deg * 2^16
@@ -205,7 +209,7 @@ dflip #(32) z15_ff (.clk(clk), .rst(rst), .d(z15), .q(z15_q));
 dflip #(32) z16_ff (.clk(clk), .rst(rst), .d(z16), .q(z16_q));
 
 //Fill unsign angle for display
-assign unsign_angle = ~input_angle + 16'b1;
+assign unsign_angle = input_angle[15] ?  ~input_angle + 16'b1 : input_angle;
 
 //Sin(0) = 0
 //Sin(90) = 1
@@ -218,7 +222,10 @@ assign cos_data = ~(|unsign_angle)        ? 32'h1_0000 :
                   unsign_angle == 16'd90  ? 32'h0      : 
                   x16_q[31]               ? ~x16_q + 32'b1 : x16_q;
 
-assign sin_sign = ~(|unsign_angle) | (unsign_angle == 16'd90) ? input_angle[15] : y16_q[31];
-assign cos_sign = ~(|unsign_angle) | (unsign_angle == 16'd90) ? input_angle[15] : x16_q[31];
+assign sin_sign = ~(|unsign_angle)         ? 1'b0            : 
+                  (unsign_angle == 16'd90) ? input_angle[15] : y16_q[31];
+
+assign cos_sign = (unsign_angle == 16'd90) ? 1'b0            : 
+                  ~(|unsign_angle)         ? input_angle[15] : x16_q[31];
 
 endmodule

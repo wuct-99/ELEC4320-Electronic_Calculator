@@ -176,6 +176,7 @@ wire [31:0] mul_result_q;
 
 wire [31:0] cos_result;
 wire [31:0] sin_result;
+wire [15:0] tan_result_int;
 
 wire [15:0] div_result_int;
 wire [23:0] div_result_frac;
@@ -250,11 +251,13 @@ wire invld_sqrt;
 wire invld_pwr;
 wire invld_log_0in;
 wire invld_log_negin;
+wire invld_log_ais1;
 wire invld_op;
 wire pwr_overflow;
 wire div_invld;
 wire div_invld_qual; 
-wire tri_invld_qual; 
+wire cos_sin_invld_qual; 
+wire tan_invld_qual; 
 
 //convert fraction binary to decimal
 wire frac2int_start;
@@ -651,7 +654,7 @@ assign invld_pwr  = op_qual_lv1[`OP_POW] & (~(|a_digit2) & ~(|a_digit1) & ~(|a_d
 //Log does not support any negative and 0 input
 assign invld_log_0in   = op_qual_lv1[`OP_LOG] & ((~(|a_digit2) & ~(|a_digit1) & ~(|a_digit0)) | (~(|b_digit2) & ~(|b_digit1) & ~(|b_digit0))) ;
 assign invld_log_negin = op_qual_lv1[`OP_LOG] & (a_sign | b_sign) ;
-assign invld_log_ais1  = op_qual_lv1[`OP_LOG] & ((~(|a_digit2) & ~(|a_digit1) & (a_digit0 == 4'd1) ;
+assign invld_log_ais1  = op_qual_lv1[`OP_LOG] & ~(|a_digit2) & ~(|a_digit1) & (a_digit0 == 4'd1) ;
 
 //No opeartion selected
 assign invld_op   = ~(|op_qual_lv1);     
@@ -914,6 +917,8 @@ assign add_result_unsign = add_result_q[15] ? ~add_result_q + 1 : add_result_q;
 assign sub_result_unsign = sub_result_q[15] ? ~sub_result_q + 1 : sub_result_q;
 assign mul_result_unsign = mul_result_q[31] ? ~mul_result_q + 1 : mul_result_q;
 
+assign tan_result_int = unsign_inputa == 16'd45 ? 1'b1 : div_result_int;
+
 //result
 assign int_result_qual = {32{op_qual_lv1[`OP_ADD ]}} & {16'b0, add_result_unsign} |
                          {32{op_qual_lv1[`OP_SUB ]}} & {16'b0, sub_result_unsign} |
@@ -922,7 +927,7 @@ assign int_result_qual = {32{op_qual_lv1[`OP_ADD ]}} & {16'b0, add_result_unsign
                          {32{op_qual_lv1[`OP_SQRT]}} & {16'b0, sqrt_result[31:16]}|
                          {32{op_qual_lv1[`OP_COS ]}} & {16'b0, cos_result[31:16]} |
                          {32{op_qual_lv1[`OP_SIN ]}} & {16'b0, sin_result[31:16]} |
-                         {32{op_qual_lv1[`OP_TAN ]}} & {16'b0, div_result_int   } |
+                         {32{op_qual_lv1[`OP_TAN ]}} & {16'b0, tan_result_int   } |
                          {32{op_qual_lv1[`OP_POW ]}} & int_pwr_result             |
                          {32{op_qual_lv1[`OP_EXP ]}} & {16'b0, int_exp_result   } |
                          {32{op_qual_lv1[`OP_LOG ]}} & {24'b0, log_result[31:24]} ;
@@ -948,13 +953,15 @@ assign div_invld_qual = div_invld & (op_qual_lv1[`OP_DIV]               |
                                      op_qual_lv1[`OP_POW] & b_sign_qual |
                                      op_qual_lv1[`OP_EXP] & a_sign_qual );
 
-assign tri_invld_qual = (op_qual_lv1[`OP_TAN] | op_qual_lv1[`OP_COS] | op_qual_lv1[`OP_SIN]) & unsign_inputa > 16'd90;
+assign cos_sin_invld_qual = (op_qual_lv1[`OP_COS] | op_qual_lv1[`OP_SIN]) & unsign_inputa > 16'd90;
+assign tan_invld_qual     =  op_qual_lv1[`OP_TAN] & unsign_inputa >= 16'd90;
 
-assign invld_result = invld_input_lv1 |
-                      div_invld_qual  | 
-                      tri_invld_qual  | 
-                      pwr_overflow    |
-                      exp_overflow    ;//FIXME
+assign invld_result = invld_input_lv1    |
+                      div_invld_qual     | 
+                      cos_sin_invld_qual | 
+                      tan_invld_qual     | 
+                      pwr_overflow       |
+                      exp_overflow       ;//FIXME
 
 //Convert binary to display value
 assign cvt_cnt_rst = exe_done;
