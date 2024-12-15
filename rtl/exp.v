@@ -21,8 +21,8 @@ output [39:0] exp_result_out;
 output exp_overflow;
 
 //internal
-wire [4:0] exp_cnt;
-wire [4:0] exp_cnt_q;
+wire [3:0] exp_cnt;
+wire [3:0] exp_cnt_q;
 
 wire [79:0] exp_result;
 wire [79:0] exp_result_q;
@@ -33,11 +33,11 @@ parameter EULER =  40'b10_1011_0111_1110_0001_0101_0001;
 
 //Divider Counter
 assign exp_cnt_en = exp_start & ~exp_done | exp_rst;
-assign exp_cnt = exp_rst ? 5'd0 : exp_cnt_q + 5'b1;
-dflip_en #(5) exp_cnt_ff (.clk(clk), .rst(rst), .en(exp_cnt_en), .d(exp_cnt), .q(exp_cnt_q));
+assign exp_cnt = exp_rst ? 4'd0 : exp_cnt_q + 4'b1;
+dflip_en #(4) exp_cnt_ff (.clk(clk), .rst(rst), .en(exp_cnt_en), .d(exp_cnt), .q(exp_cnt_q));
 
 //The execution done when counter is equal to index a
-assign exp_done = exp_cnt == unsign_inputa[4:0];
+assign exp_done = exp_cnt == unsign_inputa[3:0];
 
 // 40bit x 40bit
 // 16bit for integer
@@ -54,6 +54,6 @@ dflip_en #(80) mul_result_ff (.clk(clk), .rst(rst), .en(exp_cnt_en), .d(exp_resu
 
 assign exp_result_out = ~(|unsign_inputa)     ? 40'h100_0000 : 
                         unsign_inputa == 5'b1 ? EULER      : exp_result[63:24]; 
-assign exp_overflow = |exp_result[79:64];
+assign exp_overflow = |exp_result[79:64] | unsign_inputa > 4'd11;
 
 endmodule
