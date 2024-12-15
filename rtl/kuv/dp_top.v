@@ -11,7 +11,8 @@ module dp (
     src2_sign,
     dp_res,
     dp_res_sign,
-    dp_res_done
+    dp_res_vld,
+    dp_mode
 );
 
 // Module Interface
@@ -29,7 +30,8 @@ input               src2_sign;
 // TODO: output separate integer part and fix point part?
 output  [31:0]      dp_res;
 output              dp_res_sign;
-output              dp_res_done;
+output              dp_res_vld;
+output  [10:0]      dp_mode;
 
 // Internal Signals
 wire                is_add;
@@ -204,6 +206,16 @@ logarithm u_logarithm (
 // =================================== //
 
 // Datapath Module Output ============ //
+assign  dp_res      = ({32{is_add}}) & add2output_res |
+                      ({32{is_sub}}) & sub2output_res | 
+                      ({32{is_mul}}) & mul2output_res;
+
+assign  dp_res_sign = ({32{is_add}}) & add2output_sign |
+                      ({32{is_sub}}) & sub2output_sign | 
+                      ({32{is_mul}}) & mul2output_sign;
+
+assign  dp_res_vld  = is_add | is_sub | is_mul;
+assign  dp_mode     = mode;
 
 // =================================== //
 
