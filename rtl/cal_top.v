@@ -649,8 +649,9 @@ assign invld_sqrt = op_qual_lv1[`OP_SQRT] & a_sign;
 //Power does not support 0^0
 assign invld_pwr  = op_qual_lv1[`OP_POW] & (~(|a_digit2) & ~(|a_digit1) & ~(|a_digit0)) & (~(|b_digit2) & ~(|b_digit1) & ~(|b_digit0));
 //Log does not support any negative and 0 input
-assign invld_log_0in  = op_qual_lv1[`OP_LOG] & ((~(|a_digit2) & ~(|a_digit1) & ~(|a_digit0)) | (~(|b_digit2) & ~(|b_digit1) & ~(|b_digit0))) ;
-assign invld_log_negin  = op_qual_lv1[`OP_LOG] & (a_sign | b_sign) ;
+assign invld_log_0in   = op_qual_lv1[`OP_LOG] & ((~(|a_digit2) & ~(|a_digit1) & ~(|a_digit0)) | (~(|b_digit2) & ~(|b_digit1) & ~(|b_digit0))) ;
+assign invld_log_negin = op_qual_lv1[`OP_LOG] & (a_sign | b_sign) ;
+assign invld_log_ais1  = op_qual_lv1[`OP_LOG] & ((~(|a_digit2) & ~(|a_digit1) & (a_digit0 == 4'd1) ;
 
 //No opeartion selected
 assign invld_op   = ~(|op_qual_lv1);     
@@ -660,6 +661,7 @@ assign invld_input = invld_tri       |
                      invld_pwr       |
                      invld_log_0in   |
                      invld_log_negin |
+                     invld_log_ais1  |
                      invld_op        ;
 
 dflip_en #(1) invld_input_ff   (.clk(clk), .rst(rst), .en(init_cnt_lv2_en), .d(invld_input  ), .q(invld_input_lv1  ));
@@ -800,6 +802,7 @@ trigonometric u_trigonometric(
     .clk(clk),
     .rst(rst),
     .tri_start(fsme_in_multi & (op_qual_lv1[`OP_SIN] | op_qual_lv1[`OP_COS] | op_qual_lv1[`OP_TAN])),
+    .tri_rst(fsme_next_multi),
     .input_angle(inputa),
     .cos_data(cos_result),
     .sin_data(sin_result),

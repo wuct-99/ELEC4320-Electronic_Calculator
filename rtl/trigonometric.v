@@ -1,6 +1,7 @@
 module trigonometric(
     clk,
     rst,
+    tri_rst,
     tri_start,
     input_angle,
     cos_data,
@@ -14,6 +15,7 @@ module trigonometric(
 input clk;
 input rst;
 input tri_start;
+input tri_rst;
 input [15:0] input_angle;
 output [31:0] cos_data;
 output [31:0] sin_data;
@@ -28,7 +30,7 @@ wire [15:0] unsign_angle;
 
 //Cordic 
 
-assign tri_cnt_d = tri_cnt_q + 4'b1;
+assign tri_cnt_d = tri_rst ? 4'b0 : tri_cnt_q + 4'b1;
 assign tri_cnt_en = tri_start;
 dflip_en #(4) tri_cnt_ff (.clk(clk), .rst(rst), .en(tri_cnt_en), .d(tri_cnt_d), .q(tri_cnt_q));
 assign tri_done = &tri_cnt_q;

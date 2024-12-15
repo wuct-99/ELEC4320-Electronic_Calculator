@@ -52,7 +52,7 @@ assign exp_result = ~(|exp_cnt_q) ? {40'b0, EULER} : EULER * exp_result_shift ;
 
 dflip_en #(80) mul_result_ff (.clk(clk), .rst(rst), .en(exp_cnt_en), .d(exp_result), .q(exp_result_q));
 
-assign exp_result_out = ~(|unsign_inputa)     ? 40'h1_0000 : 
+assign exp_result_out = ~(|unsign_inputa)     ? 40'h100_0000 : 
                         unsign_inputa == 5'b1 ? EULER      : exp_result[63:24]; 
 assign exp_overflow = |exp_result[79:64];
 
