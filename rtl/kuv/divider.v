@@ -50,25 +50,25 @@ wire            div_cnt_vld;
 //  1. Divide by zero
 //  2. Calculation done (counter done)
 assign  div_by_zero = (src2 == 32'b0);
-assign  div_done    = (div_by_zero | div_cnt_done) & div_vld;
+assign  div_res_vld = (div_by_zero | div_cnt_done) & div_vld;
 assign  div_res     = (div_by_zero)? 32'hffff_ffff : quotient;
 assign  div_sign    = src1_sign ^ src2_sign;
 
 assign  dividend    = src1;
 assign  divisor     = src2;
 
-assign  accumulator_shift   = (div_cnt_done)? 32'b0 : ({accumulator[30:0]}, dividend[31]);
+assign  accumulator_shift   = (div_cnt_vld)? ({accumulator[30:0]}, dividend[31]) : 32'b0;
 assign  accumulator_nc      = (accumulator_shift >= divisor)? (accumulator_shift - divisor) : (accumulator_shift);
-assign  quotient_shift      = (div_cnt_done)? 32'b0 : ({quotient[30:0], 1'b0});
+assign  quotient_shift      = (div_cnt_vld)? ({quotient[30:0], 1'b0}) : 32'b0;
 assign  quotient_nc         = (accumulator_shift >= divisor)? ({quotient_shift[30:1], 1'b1}) : quotient_shift;
 
 dffr #(32) accumulator_ff  (.clk(clk), .rst_n(rst_n), .d(accumulator_nc), .q(accumulator));
 dffr #(32) quotient_ff     (.clk(clk), .rst_n(rst_n), .d(quotient_nc), .q(quotient));
 
 // Division Counter
-assign  div_cnt_vld     = div_vld & ~div_by_zero;
+assign  div_cnt_vld     = div_vld & ~(div_by_zero | div_cnt_done);
 assign  div_cnt_nc      = (div_cnt_vld)? (div_cnt + 1'b1) : 6'b0;
-assign  div_cnt_done    = div_vld & (div_cnt == 6'd47);
+assign  div_cnt_done    = (div_cnt == 6'd48);
 dffr #(6) div_counter (.clk(clk), .rst_n(rst_n), .d(div_cnt_nc), .q(div_cnt));
 
 endmodule
