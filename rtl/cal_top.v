@@ -270,6 +270,7 @@ wire [2:0] lead0_num     ;
 wire bin2decdigit_init;
 wire bin2decdigit_en;
 
+wire result_sign_qual;
 wire result_sign;
 wire [39:0] int_dec_digit;
 wire [39:0] frac_dec_digit;
@@ -550,14 +551,14 @@ assign cal_board_digit_ctrl = {`DIGIT_WIDTH{digit_cnt_id0}} & `DIGIT_WIDTH'b1110
 assign input_digit_curr = {`DIGIT_WIDTH{digit_cnt_id0}} & digit0_q |
                           {`DIGIT_WIDTH{digit_cnt_id1}} & digit1_q |
                           {`DIGIT_WIDTH{digit_cnt_id2}} & digit2_q |
-                          {`DIGIT_WIDTH{digit_cnt_id3}} & {3'b101, sign_q} ;
+                          {`DIGIT_WIDTH{digit_cnt_id3}} & {3'b101, result_sign} ;
 
 //get output digit
 //stage 1
 assign output_int_lv0 = {`DIGIT_WIDTH{digit_cnt_id0}} & output_digit0_for_st1 |
                         {`DIGIT_WIDTH{digit_cnt_id1}} & output_digit1_for_st1 |
                         {`DIGIT_WIDTH{digit_cnt_id2}} & output_digit2_for_st1 |
-                        {`DIGIT_WIDTH{digit_cnt_id3}} & {3'b101, result_sign}   ;
+                        {`DIGIT_WIDTH{digit_cnt_id3}} & {3'b101, result_sign} ;
 //stage 2: if output has more than 3 digits
 assign output_int_lv1 = {`DIGIT_WIDTH{digit_cnt_id0}} & output_digit0_for_st2 |
                         {`DIGIT_WIDTH{digit_cnt_id1}} & output_digit1_for_st2 |
@@ -922,19 +923,20 @@ assign int_result_qual = {32{op_qual_lv1[`OP_ADD ]}} & {16'b0, add_result_unsign
                          {32{op_qual_lv1[`OP_EXP ]}} & {16'b0, int_exp_result   } |
                          {32{op_qual_lv1[`OP_LOG ]}} & {24'b0, log_result[31:24]} ;
 
-assign result_sign = op_qual_lv1[`OP_ADD ] & add_result_q[15] |
-                     op_qual_lv1[`OP_SUB ] & sub_result_q[15] |
-                     op_qual_lv1[`OP_MUL ] & mul_result_q[31] |
-                     op_qual_lv1[`OP_DIV ] & div_sign         |
-                     op_qual_lv1[`OP_SQRT] & 1'b0             |
-                     op_qual_lv1[`OP_COS ] & cos_sign         |
-                     op_qual_lv1[`OP_SIN ] & sin_sign         |
-                     op_qual_lv1[`OP_TAN ] & div_sign         |
-                     op_qual_lv1[`OP_POW ] & pwr_sign         |
-                     op_qual_lv1[`OP_EXP ] & 1'b0             |
-                     op_qual_lv1[`OP_LOG ] & 1'b0             ;
+assign result_sign_qual = op_qual_lv1[`OP_ADD ] & add_result_q[15] |
+                          op_qual_lv1[`OP_SUB ] & sub_result_q[15] |
+                          op_qual_lv1[`OP_MUL ] & mul_result_q[31] |
+                          op_qual_lv1[`OP_DIV ] & div_sign         |
+                          op_qual_lv1[`OP_SQRT] & 1'b0             |
+                          op_qual_lv1[`OP_COS ] & cos_sign         |
+                          op_qual_lv1[`OP_SIN ] & sin_sign         |
+                          op_qual_lv1[`OP_TAN ] & div_sign         |
+                          op_qual_lv1[`OP_POW ] & pwr_sign         |
+                          op_qual_lv1[`OP_EXP ] & 1'b0             |
+                          op_qual_lv1[`OP_LOG ] & 1'b0             ;
 
 dflip_en #(32) int_result_ff  (.clk(clk), .rst(rst), .en(exe_done), .d(int_result_qual), .q(int_result_cvt_pre_q));
+dflip_en #(1)  sign_result_ff (.clk(clk), .rst(rst), .en(exe_done), .d(result_sign_qual), .q(result_sign));
 
 //overflow checking
 assign div_invld_qual = div_invld & (op_qual_lv1[`OP_DIV]               | 
