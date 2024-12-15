@@ -1,7 +1,7 @@
 //import uvm_pkg::*;
 `include "uvm_macros.svh"
 
-module add_tb;
+module intop_tb;
     reg clk;
     reg rst;
     int a_digit1;
@@ -25,6 +25,9 @@ module add_tb;
     wire [11:0] board_cal_switchs;
     assign board_cal_button  = 'b0;
     assign board_cal_switchs = 'b0;
+    
+    int op;
+    string tb_op;
 
 
     always @(*) begin
@@ -47,10 +50,17 @@ module add_tb;
     );
 
     initial begin
-        $fsdbDumpfile("./wave/add_tb.fsdb");
-        $fsdbDumpvars(0, add_tb, "+all", "+mda", "+parameter");
+        $fsdbDumpfile("./wave/intop_tb.fsdb");
+        $fsdbDumpvars(0, intop_tb, "+all", "+mda", "+parameter");
         force u_cal_top.board_cal_switchs = 'b1;
         repeat(100) begin
+            randcase
+                1: op = 11'h1; //add
+                1: op = 11'h2; //sub
+                1: op = 11'h4; //mul
+            endcase
+            force u_cal_top.board_cal_switchs = op;
+
             a_digit3 = $urandom_range(0,9);
             a_digit2 = $urandom_range(0,9);
             a_digit1 = $urandom_range(0,9);
@@ -65,11 +75,21 @@ module add_tb;
             inputa_qual = a_sign ? inputa * -1 : inputa;
             inputb_qual = b_sign ? inputb * -1 : inputb;
 
-            tb_int_result = inputa_qual + inputb_qual;
+            case(op)
+                11'h1: tb_int_result = inputa_qual + inputb_qual;
+                11'h2: tb_int_result = inputa_qual - inputb_qual;
+                11'h4: tb_int_result = inputa_qual * inputb_qual;
+            endcase
+            case(op)
+                11'h1: tb_op = "add";
+                11'h2: tb_op = "sub";
+                11'h4: tb_op = "mul";
+            endcase
+
             tb_int_result_qual = tb_int_result < 0 ? tb_int_result * -1 : tb_int_result;
             tb_sign_result = tb_int_result < 0;
             
-            
+            $display("OP: %s", tb_op);
             $display("input a NUM: %d, %d", inputa, inputa_qual);
             $display("a3, a2, a1: %d, %d, %d", a_digit3, a_digit2, a_digit1);
             $display("input b NUM: %d, %d", inputb, inputb_qual);
@@ -123,11 +143,11 @@ module add_tb;
             end
             
             while (u_cal_top.fsmc_in_display) begin
-              $display("last stage");
-              repeat(10) @(posedge clk);
-              force u_cal_top.board_cal_button = 5'b1_0000;
-              @(posedge clk);
-              release u_cal_top.board_cal_button;
+                $display("last stage");
+                repeat(10) @(posedge clk);
+                force u_cal_top.board_cal_button = 5'b1_0000;
+                @(posedge clk);
+                release u_cal_top.board_cal_button;
             end
         end
         $display("FInish");
