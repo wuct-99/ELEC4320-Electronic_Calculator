@@ -2,7 +2,7 @@
 set workingpath = $cwd
 
 while(1)
-	if(-d "rtl" && -d "script" && -d "verification") then
+	if(-d "rtl" && -d "script" && -d "sim") then
 		break
 	endif
 	cd ../
@@ -16,16 +16,10 @@ end
 #Set Env Variable
 setenv ELEC4320_FOLDER $cwd
 setenv ELEC4320_RTL    $ELEC4320_FOLDER/rtl
-setenv ELEC4320_COV    $ELEC4320_FOLDER/cov
-setenv ELEC4320_SVA    $ELEC4320_FOLDER/sva
-setenv ELEC4320_VER    $ELEC4320_FOLDER/verification
 cd $workingpath
 
 echo "[FOLDER] $ELEC4320_FOLDER"
 echo "[RTL   ] $ELEC4320_RTL"
-echo "[COV   ] $ELEC4320_COV"
-echo "[SVA   ] $ELEC4320_SVA"
-echo "[VERIFY] $ELEC4320_VER"
 
 #UVM Path
 setenv VCS_UVM_HOME /dfs/app/synopsys/vcs-vt2022.06-sp1-1/etc/uvm-1.2/src
