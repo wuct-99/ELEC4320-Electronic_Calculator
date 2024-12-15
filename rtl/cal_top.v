@@ -551,7 +551,7 @@ assign cal_board_digit_ctrl = {`DIGIT_WIDTH{digit_cnt_id0}} & `DIGIT_WIDTH'b1110
 assign input_digit_curr = {`DIGIT_WIDTH{digit_cnt_id0}} & digit0_q |
                           {`DIGIT_WIDTH{digit_cnt_id1}} & digit1_q |
                           {`DIGIT_WIDTH{digit_cnt_id2}} & digit2_q |
-                          {`DIGIT_WIDTH{digit_cnt_id3}} & {3'b101, result_sign} ;
+                          {`DIGIT_WIDTH{digit_cnt_id3}} & {3'b101, sign_q} ;
 
 //get output digit
 //stage 1
