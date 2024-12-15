@@ -2,7 +2,7 @@
 seed := $(shell perl -e "print int(rand(10000000))")
 tb = add_tb
 mode = sim_test
-fsdb_file_name = $(tb)_$(seed)
+fsdb_file_name = $(tb)
 csrc_folder_name = $(mode)"_csrc"      
 ccov = off
 fcov = off
@@ -43,7 +43,7 @@ cov:
 	verdi -cov &
 
 verdi: 
-	verdi ./tb/$(tb).sv -f ../cfg/sim_filelist.f &
+	verdi ./tb/$(tb).sv -f ${ELEC4320_RTL}/cal.f &
 
 clean: 
 	rm -rf core *_csrc simv* vc_hdrs.h ucli.key urg* *.log *.fsdb novas.* verdiLog vdCovLog
