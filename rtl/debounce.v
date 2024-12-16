@@ -10,17 +10,17 @@ input rst;
 input button_in;
 output button_out;
 
-wire [4:0] cnt;
-wire [4:0] cnt_q;
+wire [19:0] cnt;
+wire [19:0] cnt_q;
 wire button;
 wire button_q;
 
-assign cnt =  button_in            ? 5'b0 : 
-             ~button_in & (&cnt_q) ? cnt_q : cnt_q + 5'b1;
+assign cnt =  button_in            ? 20'b0 : 
+             ~button_in & (&cnt_q) ? cnt_q : cnt_q + 20'b1;
 
-dflip #(5) cnt_ff (.clk(clk), .rst(rst), .d(cnt), .q(cnt_q));
+dflip #(20, 20'hF_FFFF) cnt_ff (.clk(clk), .rst(rst), .d(cnt), .q(cnt_q));
 
-assign button = cnt == 5'h1e;
+assign button = cnt == 20'hF_FFFE;
 dflip button_ff (.clk(clk), .rst(rst), .d(button), .q(button_q));
 
 assign button_out = button_q;
