@@ -371,7 +371,12 @@ assign clk_display = clk_display_state_q;
 
 
 //button debouncing 
-debounce #(`BUTTON_WIDTH) button_debounce (.clk(clk), .rst(rst), .data_in(board_cal_button), .data_out(debounce_button));
+debounce button_left_debounce  (.clk(clk), .rst(rst), .button_in(board_cal_button[`BUTTON_LEFT ]), .button_out(debounce_button[`BUTTON_LEFT ]));
+debounce button_right_debounce (.clk(clk), .rst(rst), .button_in(board_cal_button[`BUTTON_RIGHT]), .button_out(debounce_button[`BUTTON_RIGHT]));
+debounce button_up_debounce    (.clk(clk), .rst(rst), .button_in(board_cal_button[`BUTTON_UP   ]), .button_out(debounce_button[`BUTTON_UP   ]));
+debounce button_down_debounce  (.clk(clk), .rst(rst), .button_in(board_cal_button[`BUTTON_DOWN ]), .button_out(debounce_button[`BUTTON_DOWN ]));
+debounce button_mid_debounce   (.clk(clk), .rst(rst), .button_in(board_cal_button[`BUTTON_MID  ]), .button_out(debounce_button[`BUTTON_MID  ]));
+
 
 //button decode and setup button pirority
 //left > right > up > down > mid
