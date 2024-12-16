@@ -234,7 +234,6 @@ wire cvt_done;
 wire frac2int_done;
 wire init_done;
 
-wire overflow;
 wire signed [31:0] int_result_qual;
 wire signed [31:0] int_result_cvt_pre_q;
 
@@ -258,6 +257,8 @@ wire div_invld;
 wire div_invld_qual; 
 wire cos_sin_invld_qual; 
 wire tan_invld_qual; 
+wire exp_overflow_qual;
+wire pwr_overflow_qual;
 
 //convert fraction binary to decimal
 wire frac2int_start;
@@ -957,14 +958,16 @@ assign div_invld_qual = div_invld & (op_qual_lv1[`OP_DIV]               |
                                      op_qual_lv1[`OP_EXP] & a_sign_qual );
 
 assign cos_sin_invld_qual = (op_qual_lv1[`OP_COS] | op_qual_lv1[`OP_SIN]) & unsign_inputa > 16'd90;
-assign tan_invld_qual     =  op_qual_lv1[`OP_TAN] & unsign_inputa >= 16'd90;
+assign tan_invld_qual     = op_qual_lv1[`OP_TAN] & unsign_inputa >= 16'd90;
+assign exp_overflow_qual  = op_qual_lv1[`OP_EXP] & exp_overflow;
+assign pwr_overflow_qual  = op_qual_lv1[`OP_POW] & pwr_overflow;
 
 assign invld_result = invld_input_lv1    |
                       div_invld_qual     | 
                       cos_sin_invld_qual | 
                       tan_invld_qual     | 
-                      pwr_overflow       |
-                      exp_overflow       ;//FIXME
+                      pwr_overflow_qual  |
+                      exp_overflow_qual  ;
 
 //Convert binary to display value
 assign cvt_cnt_rst = exe_done;
