@@ -348,8 +348,8 @@ wire [2:0] display_stage_q;
 wire display_last_stage;
 
 //display clk define
-wire [9:0] clk_display_cnt_d;
-wire [9:0] clk_display_cnt_q;
+wire [15:0] clk_display_cnt_d;
+wire [15:0] clk_display_cnt_q;
 wire clk_display_en;
 wire clk_display_state_d;
 wire clk_display_state_q;
@@ -361,7 +361,7 @@ wire clk_display;
 //display clk 
 //Divide clk with 1024 to get a slower clk for 7-segment dispaly
 assign clk_display_cnt_d = clk_display_cnt_q + 2'b01;
-dflip #(10) clk_display_cnt_ff (.clk(clk), .rst(rst), .d(clk_display_cnt_d), .q(clk_display_cnt_q));
+dflip #(16) clk_display_cnt_ff (.clk(clk), .rst(rst), .d(clk_display_cnt_d), .q(clk_display_cnt_q));
 
 assign clk_display_en = &clk_display_cnt_q;
 //toggle the clk signal
@@ -627,9 +627,10 @@ assign op_qual[`OP_EXP ] = switchs_in_exe[`OP_EXP ] & ~(|switchs_in_exe[9:0]);
 dflip_en #(`SWITCH_WIDTH) switch_after_init_ff (.clk(clk), .rst(rst), .en(init_cnt_lv1_en), .d(op_qual), .q(op_qual_lv1));
 
 //Only add, sub, mul must output integer result
-assign int_result_op = op_qual_lv1[`OP_ADD] | 
-                       op_qual_lv1[`OP_SUB] | 
-                       op_qual_lv1[`OP_MUL] ;
+assign int_result_op = op_qual_lv1[`OP_ADD]          | 
+                       op_qual_lv1[`OP_SUB]          | 
+                       op_qual_lv1[`OP_MUL]          |
+                       op_qual_lv1[`OP_POW] & ~b_sign;
 
 //single cycle operation
 assign single_cyc_op = op_qual_lv1[`OP_ADD] |
@@ -1083,7 +1084,7 @@ assign frac_digits_for_display_align_non0int = ~(|int_digits_idx_is0_non0int_adj
 
 assign frac_digits_for_display_align_int = int_part_is0_lv2 ? {8'b0, frac_digits_for_display_shift_lead0[39:8]} : frac_digits_for_display_align_non0int;
 
-//Prepare mask for fraction 
+
 assign mask_for_frac_part  = {{4{int_digits_idx_is0_adj[9]}}, 
                               {4{int_digits_idx_is0_adj[8]}}, 
                               {4{int_digits_idx_is0_adj[7]}}, 
